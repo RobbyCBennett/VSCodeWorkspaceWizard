@@ -32,10 +32,10 @@ class WorkspaceTreeDataProvider
 			let uri;
 			// Get path of the main folder
 			if (!treeItem) {
-				updateConfigCache();
-				uri = vscode.Uri.file(config.general.folder);
-				if (!uri)
+				refreshConfigCache();
+				if (!config.general.folder)
 					return resolve([]);
+				uri = vscode.Uri.file(config.general.folder);
 			}
 			// Get path of a sub-folder
 			else
@@ -145,9 +145,36 @@ function popupError(error)
 	vscode.window.showErrorMessage(error.toString());
 }
 
-function updateConfigCache()
+function refreshConfigCache()
 {
 	config = vscode.workspace.getConfiguration().get('workspaceWizard');
+}
+
+async function setConfig(key, value)
+{
+	await vscode.workspace.getConfiguration().update(`workspaceWizard.${key}`, value, true);
+	refreshConfigCache();
+}
+
+
+//
+// Extension Commands
+//
+
+async function commandSetup()
+{
+	const uris = await vscode.window.showOpenDialog({
+		canSelectFiles: false,
+		canSelectFolders: true,
+		canSelectMany: false,
+		openLabel: 'Select',
+		title: 'Select folder with .code-workspace files',
+	});
+
+	if (uris && uris.length) {
+		await setConfig('general.folder', uris[0].fsPath);
+		tree.refresh();
+	}
 }
 
 
@@ -157,9 +184,16 @@ function updateConfigCache()
 
 function activate(context)
 {
-	// Register tree data provider
 	tree = new WorkspaceTreeDataProvider();
-	vscode.window.registerTreeDataProvider('workspaceWizard', tree);
+
+	// Register
+	context.subscriptions.push(
+		// Tree data provider
+		vscode.window.registerTreeDataProvider('workspaceWizard', tree),
+
+		// Commands
+		vscode.commands.registerCommand('workspaceWizard.setup', commandSetup),
+	);
 }
 
 function deactivate()

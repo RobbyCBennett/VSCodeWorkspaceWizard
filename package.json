@@ -79,8 +79,9 @@
 		},
 		"viewsWelcome": [
 			{
+				"id": "workspaceWizardWelcome",
 				"view": "workspaceWizard",
-				"contents": "Hello there"
+				"contents": "Choose a folder with .code-workspace files\n[Set up](command:workspaceWizard.setup)"
 			}
 		]
 	}
