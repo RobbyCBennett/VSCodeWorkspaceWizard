@@ -29,34 +29,48 @@
 		"configuration": {
 			"title": "Workspace Wizard",
 			"properties": {
-				"workspaceWizard.general.folder": {
+				"workspaceWizard.general.mainFolder": {
 					"type": "string",
-					"description": "Folder that contains .code-workspace files"
+					"description": "Main folder that contains .code-workspace files"
 				},
-				"workspaceWizard.quickPick.showOnBlankWindow": {
+				"workspaceWizard.general.startOnExistingWindow": {
+					"type": "string",
+					"default": "None",
+					"enum": ["None", "QuickPick", "Sidebar"],
+					"description": "Start the Workspaces when an existing/used window is opened"
+				},
+				"workspaceWizard.general.startOnNewWindow": {
+					"type": "string",
+					"default": "None",
+					"enum": ["None", "QuickPick", "Sidebar"],
+					"description": "Start with Workspaces when a new/blank window is opened"
+				},
+				"workspaceWizard.quickPick.defaultOpenAction": {
+					"type": "string",
+					"default": "Open Current",
+					"enum": ["None", "Open Current", "Open New"],
+					"description": "What happens with a workspace is clicked or enter is pressed"
+				},
+				"workspaceWizard.quickPick.showFolders": {
 					"type": "boolean",
 					"default": true,
-					"description": "Show the Workspaces quick pick when a new blank window is opened"
+					"description": "Show folders in the quick pick, otherwise flatten the tree"
 				},
-				"workspaceWizard.quickPick.showOnUsedWindow": {
-					"type": "boolean",
-					"default": false,
-					"description": "Show the Workspaces quick pick when a used window is opened"
+				"workspaceWizard.sidebar.defaultOpenAction": {
+					"type": "string",
+					"default": "Open Current",
+					"enum": ["None", "Open Current", "Open New"],
+					"description": "What happens with a workspace is clicked or space is pressed"
 				},
-				"workspaceWizard.sidebar.expand": {
-					"type": "boolean",
-					"default": true,
-					"description": "Expand folders in the Workspaces sidebar"
-				},
-				"workspaceWizard.sidebar.showOnBlankWindow": {
+				"workspaceWizard.sidebar.showFolders": {
 					"type": "boolean",
 					"default": true,
-					"description": "Show the Workspaces sidebar when a new blank window is opened"
+					"description": "Show folders in the sidebar, otherwise flatten the tree"
 				},
-				"workspaceWizard.sidebar.showOnUsedWindow": {
+				"workspaceWizard.sidebar.expandFolders": {
 					"type": "boolean",
-					"default": false,
-					"description": "Show the Workspaces sidebar when a used window is opened"
+					"default": true,
+					"description": "Expand folders in the sidebar by default"
 				}
 			}
 		},
@@ -81,7 +95,7 @@
 			{
 				"id": "workspaceWizardWelcome",
 				"view": "workspaceWizard",
-				"contents": "Choose a folder with .code-workspace files\n[Set up](command:workspaceWizard.setup)"
+				"contents": "Choose a folder with .code-workspace files\n[Choose Workspaces Folder](command:workspaceWizard.chooseWorkspacesFolder)"
 			}
 		]
 	}

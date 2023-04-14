@@ -5,7 +5,7 @@ const vscode = require('vscode');
 // Data
 //
 
-let tree;
+let tree; // TODO: cache all this in globalState
 let config;
 
 
@@ -33,9 +33,9 @@ class WorkspaceTreeDataProvider
 			// Get path of the main folder
 			if (!treeItem) {
 				refreshConfigCache();
-				if (!config.general.folder)
+				if (!config.general.mainFolder)
 					return resolve([]);
-				uri = vscode.Uri.file(config.general.folder);
+				uri = vscode.Uri.file(config.general.mainFolder);
 			}
 			// Get path of a sub-folder
 			else
@@ -99,6 +99,7 @@ class SubFolderTreeItem extends vscode.TreeItem
 
 class WorkspaceFileTreeItem extends vscode.TreeItem
 {
+	command;
 	contextValue;
 	uri;
 
@@ -108,13 +109,14 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 			name.slice(0, -15),
 			vscode.TreeItemCollapsibleState.None
 		);
+		this.command = {
+			arguments: [this],
+			command: 'workspaceWizard.open',
+			title: 'Open workspace title',
+			tooltip: 'Open workspace tooltip',
+		};
 		this.contextValue = 'workspace'
 		this.uri = vscode.Uri.joinPath(uri, name);
-	}
-
-	open()
-	{
-		popup('TODO OPEN THIS WORKSPACE');
 	}
 }
 
@@ -161,8 +163,9 @@ async function setConfig(key, value)
 // Extension Commands
 //
 
-async function commandSetup()
+async function commandChooseWorkspacesFolder()
 {
+	// Get folder from user input
 	const uris = await vscode.window.showOpenDialog({
 		canSelectFiles: false,
 		canSelectFolders: true,
@@ -171,10 +174,40 @@ async function commandSetup()
 		title: 'Select folder with .code-workspace files',
 	});
 
+	// Set the global config and refresh the tree
 	if (uris && uris.length) {
-		await setConfig('general.folder', uris[0].fsPath);
+		await setConfig('general.mainFolder', uris[0].fsPath);
 		tree.refresh();
 	}
+}
+
+function commandOpen(item)
+{
+	// Decide where to open
+	refreshConfigCache();
+	let defaultOpenAction;
+	if (item instanceof WorkspaceFileTreeItem)
+		defaultOpenAction = config.sidebar.defaultOpenAction;
+	else if (false)
+		defaultOpenAction = config.quickPick.defaultOpenAction;
+	else
+		return;
+
+	// Open
+	if (defaultOpenAction === 'Open Current')
+		commandOpenCurrent(item);
+	else if (defaultOpenAction === 'Open New')
+		commandOpenNew(item);
+}
+
+function commandOpenCurrent(item)
+{
+	vscode.commands.executeCommand('vscode.openFolder', item.uri, false);
+}
+
+function commandOpenNew(item)
+{
+	vscode.commands.executeCommand('vscode.openFolder', item.uri, true);
 }
 
 
@@ -192,7 +225,10 @@ function activate(context)
 		vscode.window.registerTreeDataProvider('workspaceWizard', tree),
 
 		// Commands
-		vscode.commands.registerCommand('workspaceWizard.setup', commandSetup),
+		vscode.commands.registerCommand('workspaceWizard.chooseWorkspacesFolder', commandChooseWorkspacesFolder),
+		vscode.commands.registerCommand('workspaceWizard.open', commandOpen),
+		vscode.commands.registerCommand('workspaceWizard.openCurrent', commandOpenCurrent),
+		vscode.commands.registerCommand('workspaceWizard.openNew', commandOpenNew),
 	);
 }
 
