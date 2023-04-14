@@ -2,11 +2,20 @@ const vscode = require('vscode');
 
 
 //
-// Data
+// Persistent Data
 //
 
-let tree; // TODO: cache all this in globalState
+const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
+const KEY_CHILDREN_CACHE    = 'treeChildrenCache';
+
+
+//
+// Temporary Data
+//
+
 let config;
+let context;
+let tree;
 
 
 //
@@ -30,12 +39,12 @@ class WorkspaceTreeDataProvider
 		{
 			// Get path
 			let uri;
-			// Get path of the main folder
+			// Get path of the workspaces folder
 			if (!treeItem) {
-				refreshConfigCache();
-				if (!config.general.mainFolder)
+				const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
+				if (!workspacesFolder)
 					return resolve([]);
-				uri = vscode.Uri.file(config.general.mainFolder);
+				uri = vscode.Uri.file(workspacesFolder);
 			}
 			// Get path of a sub-folder
 			else
@@ -75,6 +84,7 @@ class WorkspaceTreeDataProvider
 
 	refresh()
 	{
+		refreshConfigCache();
 		this._onDidChangeTreeData.fire();
 	}
 }
@@ -152,20 +162,14 @@ function refreshConfigCache()
 	config = vscode.workspace.getConfiguration().get('workspaceWizard');
 }
 
-async function setConfig(key, value)
-{
-	await vscode.workspace.getConfiguration().update(`workspaceWizard.${key}`, value, true);
-	refreshConfigCache();
-}
-
 
 //
 // Extension Commands
 //
 
-async function commandChooseWorkspacesFolder()
+async function selectWorkspacesFolder()
 {
-	// Get folder from user input
+	// Get the workspaces folder from user input
 	const uris = await vscode.window.showOpenDialog({
 		canSelectFiles: false,
 		canSelectFolders: true,
@@ -174,14 +178,14 @@ async function commandChooseWorkspacesFolder()
 		title: 'Select folder with .code-workspace files',
 	});
 
-	// Set the global config and refresh the tree
+	// Remember the workspaces folder and refresh the tree
 	if (uris && uris.length) {
-		await setConfig('general.mainFolder', uris[0].fsPath);
+		await context.globalState.update(KEY_WORKSPACES_FOLDER, uris[0].fsPath);
 		tree.refresh();
 	}
 }
 
-function commandOpen(item)
+function open(item)
 {
 	// Decide where to open
 	refreshConfigCache();
@@ -191,21 +195,21 @@ function commandOpen(item)
 	else if (false)
 		defaultOpenAction = config.quickPick.defaultOpenAction;
 	else
-		return;
+		return popupError('No Workspace to open');
 
 	// Open
 	if (defaultOpenAction === 'Open Current')
-		commandOpenCurrent(item);
+		openWorkspaceInCurrentWindow(item);
 	else if (defaultOpenAction === 'Open New')
-		commandOpenNew(item);
+		openWorkspaceInNewWindow(item);
 }
 
-function commandOpenCurrent(item)
+function openWorkspaceInCurrentWindow(item)
 {
 	vscode.commands.executeCommand('vscode.openFolder', item.uri, false);
 }
 
-function commandOpenNew(item)
+function openWorkspaceInNewWindow(item)
 {
 	vscode.commands.executeCommand('vscode.openFolder', item.uri, true);
 }
@@ -215,9 +219,12 @@ function commandOpenNew(item)
 // Extension Initialization
 //
 
-function activate(context)
+function activate(_context)
 {
+	// Temporary data
+	context = _context;
 	tree = new WorkspaceTreeDataProvider();
+	refreshConfigCache();
 
 	// Register
 	context.subscriptions.push(
@@ -225,10 +232,14 @@ function activate(context)
 		vscode.window.registerTreeDataProvider('workspaceWizard', tree),
 
 		// Commands
-		vscode.commands.registerCommand('workspaceWizard.chooseWorkspacesFolder', commandChooseWorkspacesFolder),
-		vscode.commands.registerCommand('workspaceWizard.open', commandOpen),
-		vscode.commands.registerCommand('workspaceWizard.openCurrent', commandOpenCurrent),
-		vscode.commands.registerCommand('workspaceWizard.openNew', commandOpenNew),
+		vscode.commands.registerCommand(
+			'workspaceWizard.selectWorkspacesFolder',
+			selectWorkspacesFolder
+		),
+		vscode.commands.registerCommand(
+			'workspaceWizard.open',
+			open
+		),
 	);
 }
 

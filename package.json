@@ -8,6 +8,9 @@
 		"type": "git",
 		"url": "https://github.com/RobbyCBennett/VSCodeWorkspaceWizard.git"
 	},
+	"activationEvents": [
+		"*"
+	],
 	"engines": {
 		"vscode": "^1.77.1"
 	},
@@ -26,13 +29,15 @@
 	"icon": "icon.png",
 	"main": "./extension.js",
 	"contributes": {
+		"commands": [
+			{
+				"command": "workspaceWizard.selectWorkspacesFolder",
+				"title": "Select Workspaces Folder"
+			}
+		],
 		"configuration": {
 			"title": "Workspace Wizard",
 			"properties": {
-				"workspaceWizard.general.mainFolder": {
-					"type": "string",
-					"description": "Main folder that contains .code-workspace files"
-				},
 				"workspaceWizard.general.startOnExistingWindow": {
 					"type": "string",
 					"default": "None",
@@ -62,17 +67,25 @@
 					"enum": ["None", "Open Current", "Open New"],
 					"description": "What happens with a workspace is clicked or space is pressed"
 				},
-				"workspaceWizard.sidebar.showFolders": {
-					"type": "boolean",
-					"default": true,
-					"description": "Show folders in the sidebar, otherwise flatten the tree"
-				},
 				"workspaceWizard.sidebar.expandFolders": {
 					"type": "boolean",
 					"default": true,
 					"description": "Expand folders in the sidebar by default"
+				},
+				"workspaceWizard.sidebar.showFolders": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show folders in the sidebar, otherwise flatten the tree"
 				}
 			}
+		},
+		"menus": {
+			"view/title": [
+				{
+					"command": "workspaceWizard.selectWorkspacesFolder",
+					"when": "view == workspaceWizard"
+				}
+			]
 		},
 		"views": {
 			"workspaceWizard": [
@@ -90,13 +103,6 @@
 					"icon": "$(folder-library)"
 				}
 			]
-		},
-		"viewsWelcome": [
-			{
-				"id": "workspaceWizardWelcome",
-				"view": "workspaceWizard",
-				"contents": "Choose a folder with .code-workspace files\n[Choose Workspaces Folder](command:workspaceWizard.chooseWorkspacesFolder)"
-			}
-		]
+		}
 	}
 }
