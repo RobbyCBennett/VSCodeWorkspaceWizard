@@ -15,6 +15,7 @@ const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
 let config;
 let context;
 let tree;
+let watcher;
 
 
 //
@@ -166,9 +167,41 @@ function refreshConfigCache()
 	config = vscode.workspace.getConfiguration().get('workspaceWizard');
 }
 
-function refreshConfigCache()
+function startOrStopFileSystemWatcher()
 {
-	config = vscode.workspace.getConfiguration().get('workspaceWizard');
+	// TODO: Don't forget to start/stop this after activation if config is changed
+	// (workspaceWizard.general.watchForChanges)
+
+	// If the user wants to watch for changes
+	if (config.general.watchForChanges) {
+		// Skip if it's already been started
+		if (watcher !== undefined)
+			return;
+
+		// Skip if there is no workspace folder
+		const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
+		if (!workspacesFolder)
+			return;
+
+		// Start watching
+		const uri = vscode.Uri.file(workspacesFolder);
+		const globPattern = new vscode.RelativePattern(uri, '**/*');
+		watcher = vscode.workspace.createFileSystemWatcher(globPattern);
+		// TODO make these things work
+		watcher.onDidChange((uri) => { log(`changed ${uri}`); });
+		watcher.onDidCreate((uri) => { log(`created ${uri}`); });
+		watcher.onDidDelete((uri) => { log(`deleted ${uri}`); });
+	}
+	// If the user wants to watch for changes
+	else {
+		// Skip if it's already been stopped
+		if (watcher === undefined)
+			return;
+
+		// Stop watching
+		watcher.dispose();
+		watcher = undefined;
+	}
 }
 
 
@@ -187,9 +220,10 @@ async function selectWorkspacesFolder()
 		title: 'Select folder with .code-workspace files',
 	});
 
-	// Remember the workspaces folder and refresh the tree
+	// Remember the workspaces folder, start/stop watcher, and refresh the tree
 	if (uris && uris.length) {
 		await context.globalState.update(KEY_WORKSPACES_FOLDER, uris[0].fsPath);
+		startOrStopFileSystemWatcher();
 		tree.refresh();
 	}
 }
@@ -266,6 +300,8 @@ function activate(_context)
 	else if (startAction === 'Sidebar')
 		vscode.commands.executeCommand('workbench.view.extension.workspaceWizard');
 
+	// Watch file system for changes to the workspaces folder
+	startOrStopFileSystemWatcher();
 }
 
 function deactivate()
@@ -289,4 +325,3 @@ module.exports = {
 // Implement showFolders
 
 // Automatically refresh if the user wants a file system watcher
-// vscode.workspace.createFileSystemWatcher

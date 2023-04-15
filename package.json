@@ -54,6 +54,11 @@
 					"enum": ["None", "QuickPick", "Sidebar"],
 					"description": "Start with workspaces when a new/blank window is opened"
 				},
+				"workspaceWizard.general.watchForChanges": {
+					"type": "boolean",
+					"default": false,
+					"description": "Watch for changes to the workspaces folder and its descendants"
+				},
 
 				"workspaceWizard.quickPick.defaultOpenAction": {
 					"type": "string",
