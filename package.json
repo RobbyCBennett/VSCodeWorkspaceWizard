@@ -54,6 +54,7 @@
 					"enum": ["None", "QuickPick", "Sidebar"],
 					"description": "Start with workspaces when a new/blank window is opened"
 				},
+
 				"workspaceWizard.quickPick.defaultOpenAction": {
 					"type": "string",
 					"default": "Open in Current Window",
@@ -61,10 +62,12 @@
 					"description": "What happens when a workspace is clicked or enter is pressed"
 				},
 				"workspaceWizard.quickPick.showFolders": {
-					"type": "boolean",
-					"default": true,
+					"type": "string",
+					"default": "Open in Current Window",
+					"enum": ["All Folders", "Folders with Workspace Files", "No Folders"],
 					"description": "Show folders in the quick pick, otherwise flatten the tree"
 				},
+
 				"workspaceWizard.sidebar.defaultOpenAction": {
 					"type": "string",
 					"default": "Open in Current Window",
@@ -77,8 +80,9 @@
 					"description": "Expand folders in the sidebar by default"
 				},
 				"workspaceWizard.sidebar.showFolders": {
-					"type": "boolean",
-					"default": true,
+					"type": "string",
+					"default": "Open in Current Window",
+					"enum": ["All Folders", "Folders with Workspace Files", "No Folders"],
 					"description": "Show folders in the sidebar, otherwise flatten the tree"
 				}
 			}
