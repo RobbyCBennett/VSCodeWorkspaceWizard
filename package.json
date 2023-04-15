@@ -47,19 +47,19 @@
 					"type": "string",
 					"default": "None",
 					"enum": ["None", "QuickPick", "Sidebar"],
-					"description": "Start the Workspaces when an existing/used window is opened"
+					"description": "Start with workspaces when an existing/used window is opened"
 				},
 				"workspaceWizard.general.startOnNewWindow": {
 					"type": "string",
-					"default": "None",
+					"default": "Sidebar",
 					"enum": ["None", "QuickPick", "Sidebar"],
-					"description": "Start with Workspaces when a new/blank window is opened"
+					"description": "Start with workspaces when a new/blank window is opened"
 				},
 				"workspaceWizard.quickPick.defaultOpenAction": {
 					"type": "string",
-					"default": "Open Current",
-					"enum": ["None", "Open Current", "Open New"],
-					"description": "What happens with a workspace is clicked or enter is pressed"
+					"default": "Open in Current Window",
+					"enum": ["Open in Current Window", "Open in New Window"],
+					"description": "What happens when a workspace is clicked or enter is pressed"
 				},
 				"workspaceWizard.quickPick.showFolders": {
 					"type": "boolean",
@@ -68,9 +68,9 @@
 				},
 				"workspaceWizard.sidebar.defaultOpenAction": {
 					"type": "string",
-					"default": "Open Current",
-					"enum": ["None", "Open Current", "Open New"],
-					"description": "What happens with a workspace is clicked or space is pressed"
+					"default": "Open in Current Window",
+					"enum": ["Open in Current Window", "Open in New Window"],
+					"description": "What happens when a workspace is clicked or space is pressed"
 				},
 				"workspaceWizard.sidebar.expandFolders": {
 					"type": "boolean",

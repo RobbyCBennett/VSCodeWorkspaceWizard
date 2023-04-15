@@ -41,8 +41,10 @@ class WorkspaceTreeDataProvider
 			// Get path of the workspaces folder
 			if (!treeItem) {
 				const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
-				if (!workspacesFolder)
+				if (!workspacesFolder) {
+					popupInfo('Run the command "Select Workspaces Folder"');
 					return resolve([]);
+				}
 				uri = vscode.Uri.file(workspacesFolder);
 			}
 			// Get path of a sub-folder
@@ -97,7 +99,7 @@ class SubFolderTreeItem extends vscode.TreeItem
 	{
 		super(
 			name,
-			config.sidebar.expand
+			config.sidebar.expandFolders
 				? vscode.TreeItemCollapsibleState.Expanded
 				: vscode.TreeItemCollapsibleState.Collapsed
 		);
@@ -134,26 +136,34 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 // Helper Functions
 //
 
+function toString(msg)
+{
+	try {
+		return JSON.stringify(msg);
+	} catch (err) {
+		return err ? err.toString() : 'Error: toString failed';
+	}
+}
+
 const logger = vscode.window.createOutputChannel('Workspace Wizard');
-function log(message)
+function log(msg)
 {
-	if (typeof message === 'string')
-		logger.appendLine(message);
-	else
-		logger.appendLine(JSON.stringify(message));
+	logger.appendLine(toString(msg));
 }
 
-function popup(message)
+function popupInfo(msg)
 {
-	if (typeof message === 'string')
-		vscode.window.showInformationMessage(message);
-	else
-		vscode.window.showInformationMessage(JSON.stringify(message));
+	vscode.window.showInformationMessage(toString(msg));
 }
 
-function popupError(error)
+function popupError(msg)
 {
-	vscode.window.showErrorMessage(error.toString());
+	vscode.window.showErrorMessage(toString(msg));
+}
+
+function refreshConfigCache()
+{
+	config = vscode.workspace.getConfiguration().get('workspaceWizard');
 }
 
 function refreshConfigCache()
@@ -189,17 +199,15 @@ function open(item)
 	// Decide where to open
 	refreshConfigCache();
 	let defaultOpenAction;
-	if (item instanceof WorkspaceFileTreeItem)
-		defaultOpenAction = config.sidebar.defaultOpenAction;
-	else if (false)
+	if (false) // TODO quick pick
 		defaultOpenAction = config.quickPick.defaultOpenAction;
-	else
-		return popupError('No Workspace to open');
+	else if (item instanceof WorkspaceFileTreeItem)
+		defaultOpenAction = config.sidebar.defaultOpenAction;
 
 	// Open
-	if (defaultOpenAction === 'Open Current')
+	if (defaultOpenAction === 'Open in Current Window')
 		openWorkspaceInCurrentWindow(item);
-	else if (defaultOpenAction === 'Open New')
+	else if (defaultOpenAction === 'Open in New Window')
 		openWorkspaceInNewWindow(item);
 }
 
@@ -249,6 +257,15 @@ function activate(_context)
 			refresh
 		),
 	);
+
+	// Open the workspaces on startup
+	const isExisting = vscode.workspace.name ? true : false;
+	const startAction = isExisting ? config.general.startOnExistingWindow : config.general.startOnNewWindow;
+	if (startAction === 'QuickPick')
+		popupInfo('TODO OPEN QUICK PICK');
+	else if (startAction === 'Sidebar')
+		vscode.commands.executeCommand('workbench.view.extension.workspaceWizard');
+
 }
 
 function deactivate()
@@ -260,3 +277,16 @@ module.exports = {
 	activate,
 	deactivate
 }
+
+
+// TODO
+
+// Fix the problem where focus is lost when first loading
+// workbench.action.focusSideBar
+
+// Implement a quick pick menu
+
+// Implement showFolders
+
+// Automatically refresh if the user wants a file system watcher
+// vscode.workspace.createFileSystemWatcher
