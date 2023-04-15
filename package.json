@@ -9,22 +9,21 @@
 		"url": "https://github.com/RobbyCBennett/VSCodeWorkspaceWizard.git"
 	},
 	"activationEvents": [
-		"*"
+		"onStartupFinished"
 	],
 	"engines": {
 		"vscode": "^1.77.1"
 	},
 	"categories": [
 		"Other",
-		"Keymaps",
-		"Visualization"
+		"Keymaps"
 	],
 	"keywords": [
 		"Switch",
 		"Workspace",
-		"Project",
 		"Organize",
-		"Open"
+		"Sidebar",
+		"QuickPick"
 	],
 	"icon": "icon.png",
 	"main": "./extension.js",
