@@ -167,10 +167,11 @@ function refreshConfigCache()
 	config = vscode.workspace.getConfiguration().get('workspaceWizard');
 }
 
-function startOrStopFileSystemWatcher()
+function startOrStopFileSystemWatcher(e)
 {
-	// TODO: Don't forget to start/stop this after activation if config is changed
-	// (workspaceWizard.general.watchForChanges)
+	// If triggered by an unrelated configuration change, then skip
+	if (e !== undefined && !e.affectsConfiguration('workspaceWizard.general.watchForChanges'))
+		return;
 
 	// If the user wants to watch for changes
 	if (config.general.watchForChanges) {
@@ -191,9 +192,9 @@ function startOrStopFileSystemWatcher()
 		const ignoreDelete = false;
 		watcher = vscode.workspace.createFileSystemWatcher(
 			globPattern, ignoreCreate, ignoreChange, ignoreDelete);
-		// TODO: Try adding parameters to refresh to improve make this more efficient
-		watcher.onDidCreate((uri) => { tree.refresh(); });
-		watcher.onDidDelete((uri) => { tree.refresh(); });
+		// TODO: Try adding parameters to tree.refresh to make this more efficient
+		watcher.onDidCreate((files) => { tree.refresh(); });
+		watcher.onDidDelete((files) => { tree.refresh(); });
 	}
 	// If the user wants to watch for changes
 	else {
@@ -305,6 +306,7 @@ function activate(_context)
 
 	// Watch file system for changes to the workspaces folder
 	startOrStopFileSystemWatcher();
+	vscode.workspace.onDidChangeConfiguration(startOrStopFileSystemWatcher);
 }
 
 function deactivate()
@@ -326,5 +328,3 @@ module.exports = {
 // Implement a quick pick menu
 
 // Implement showFolders
-
-// Automatically refresh if the user wants a file system watcher

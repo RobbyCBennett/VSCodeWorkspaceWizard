@@ -68,7 +68,7 @@
 				},
 				"workspaceWizard.quickPick.showFolders": {
 					"type": "string",
-					"default": "Open in Current Window",
+					"default": "All Folders",
 					"enum": ["All Folders", "Folders with Workspace Files", "No Folders"],
 					"description": "Show folders in the quick pick, otherwise flatten the tree"
 				},
@@ -86,7 +86,7 @@
 				},
 				"workspaceWizard.sidebar.showFolders": {
 					"type": "string",
-					"default": "Open in Current Window",
+					"default": "All Folders",
 					"enum": ["All Folders", "Folders with Workspace Files", "No Folders"],
 					"description": "Show folders in the sidebar, otherwise flatten the tree"
 				}
