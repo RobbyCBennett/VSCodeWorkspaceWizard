@@ -6,7 +6,6 @@ const vscode = require('vscode');
 //
 
 const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
-const KEY_CHILDREN_CACHE    = 'treeChildrenCache';
 
 
 //
@@ -214,6 +213,11 @@ function openWorkspaceInNewWindow(item)
 	vscode.commands.executeCommand('vscode.openFolder', item.uri, true);
 }
 
+function refresh()
+{
+	tree.refresh();
+}
+
 
 //
 // Extension Initialization
@@ -239,6 +243,10 @@ function activate(_context)
 		vscode.commands.registerCommand(
 			'workspaceWizard.open',
 			open
+		),
+		vscode.commands.registerCommand(
+			'workspaceWizard.refresh',
+			refresh
 		),
 	);
 }

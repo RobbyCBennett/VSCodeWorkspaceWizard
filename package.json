@@ -33,6 +33,11 @@
 			{
 				"command": "workspaceWizard.selectWorkspacesFolder",
 				"title": "Select Workspaces Folder"
+			},
+			{
+				"command": "workspaceWizard.refresh",
+				"title": "Refresh",
+				"icon": "$(refresh)"
 			}
 		],
 		"configuration": {
@@ -84,6 +89,11 @@
 				{
 					"command": "workspaceWizard.selectWorkspacesFolder",
 					"when": "view == workspaceWizard"
+				},
+				{
+					"command": "workspaceWizard.refresh",
+					"when": "view == workspaceWizard",
+					"group": "navigation"
 				}
 			]
 		},
