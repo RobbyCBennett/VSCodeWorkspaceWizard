@@ -80,9 +80,10 @@
 					"description": "What happens when a workspace is clicked or space is pressed"
 				},
 				"workspaceWizard.sidebar.expandFolders": {
-					"type": "boolean",
-					"default": true,
-					"description": "Expand folders in the sidebar by default"
+					"type": "string",
+					"default": "All Folders",
+					"enum": ["All Folders", "Expanded Last Time", "None"],
+					"description": "Automatically expand folders in the sidebar"
 				},
 				"workspaceWizard.sidebar.showFolders": {
 					"type": "string",

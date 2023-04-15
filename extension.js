@@ -6,6 +6,7 @@ const vscode = require('vscode');
 //
 
 const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
+const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
 
 
 //
@@ -328,3 +329,5 @@ module.exports = {
 // Implement a quick pick menu
 
 // Implement showFolders
+
+// Implement expandFolders to support the new options
