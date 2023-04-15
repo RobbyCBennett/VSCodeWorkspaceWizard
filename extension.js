@@ -186,11 +186,14 @@ function startOrStopFileSystemWatcher()
 		// Start watching
 		const uri = vscode.Uri.file(workspacesFolder);
 		const globPattern = new vscode.RelativePattern(uri, '**/*');
-		watcher = vscode.workspace.createFileSystemWatcher(globPattern);
-		// TODO make these things work
-		watcher.onDidChange((uri) => { log(`changed ${uri}`); });
-		watcher.onDidCreate((uri) => { log(`created ${uri}`); });
-		watcher.onDidDelete((uri) => { log(`deleted ${uri}`); });
+		const ignoreCreate = false;
+		const ignoreChange = true;
+		const ignoreDelete = false;
+		watcher = vscode.workspace.createFileSystemWatcher(
+			globPattern, ignoreCreate, ignoreChange, ignoreDelete);
+		// TODO: Try adding parameters to refresh to improve make this more efficient
+		watcher.onDidCreate((uri) => { tree.refresh(); });
+		watcher.onDidDelete((uri) => { tree.refresh(); });
 	}
 	// If the user wants to watch for changes
 	else {
