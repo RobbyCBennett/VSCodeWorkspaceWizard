@@ -30,6 +30,16 @@
 	"contributes": {
 		"commands": [
 			{
+				"command": "workspaceWizard.openWorkspaceInCurrentWindow",
+				"title": "Open Workspace in Current Window",
+				"icon": "$(window)"
+			},
+			{
+				"command": "workspaceWizard.openWorkspaceInNewWindow",
+				"title": "Open Workspace in New Window",
+				"icon": "$(empty-window)"
+			},
+			{
 				"command": "workspaceWizard.quickPickWorkspace",
 				"title": "Quick Pick Workspace"
 			},
@@ -59,12 +69,6 @@
 					"description": "Start with workspaces when a new/blank window is opened"
 				},
 
-				"workspaceWizard.quickPick.defaultOpenAction": {
-					"type": "string",
-					"default": "Open in Current Window",
-					"enum": ["Open in Current Window", "Open in New Window"],
-					"description": "What happens when a workspace is clicked or enter is pressed"
-				},
 				"workspaceWizard.quickPick.icon.folder": {
 					"type": "string",
 					"default": "folder",
@@ -75,13 +79,12 @@
 					"default": "folder-library",
 					"description": "Icon identifier for workspaces in the quick pick"
 				},
-
-				"workspaceWizard.sidebar.defaultOpenAction": {
-					"type": "string",
-					"default": "Open in Current Window",
-					"enum": ["Open in Current Window", "Open in New Window"],
-					"description": "What happens when a workspace is clicked or space is pressed"
+				"workspaceWizard.quickPick.openInNewWindow": {
+					"type": "boolean",
+					"default": false,
+					"description": "When a workspace is clicked or enter is pressed, open in a new window"
 				},
+
 				"workspaceWizard.sidebar.expandFolders": {
 					"type": "string",
 					"default": "All Folders",
@@ -98,6 +101,11 @@
 					"default": "",
 					"description": "Icon identifier for workspaces in the sidebar"
 				},
+				"workspaceWizard.sidebar.openInNewWindow": {
+					"type": "boolean",
+					"default": false,
+					"description": "When a workspace is clicked or space is pressed, open in a new window"
+				},
 				"workspaceWizard.sidebar.watchForChanges": {
 					"type": "boolean",
 					"default": false,
@@ -106,6 +114,28 @@
 			}
 		},
 		"menus": {
+			"commandPalette": [
+				{
+					"command": "workspaceWizard.openWorkspaceInCurrentWindow",
+					"when": "false"
+				},
+				{
+					"command": "workspaceWizard.openWorkspaceInNewWindow",
+					"when": "false"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "workspaceWizard.openWorkspaceInCurrentWindow",
+					"when": "view == workspaceWizard && viewItem == workspace && config.workspaceWizard.sidebar.openInNewWindow",
+					"group": "inline"
+				},
+				{
+					"command": "workspaceWizard.openWorkspaceInNewWindow",
+					"when": "view == workspaceWizard && viewItem == workspace && !config.workspaceWizard.sidebar.openInNewWindow",
+					"group": "inline"
+				}
+			],
 			"view/title": [
 				{
 					"command": "workspaceWizard.selectWorkspacesFolder",

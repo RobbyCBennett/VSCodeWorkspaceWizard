@@ -155,18 +155,9 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 // Helper Functions
 //
 
-function simplifyWorkspace(name)
-{
-	return name.slice(0, -15);
-}
-
-function toString(msg)
-{
-	try {
-		return JSON.stringify(msg);
-	} catch (err) {
-		return err ? err.toString() : 'Error: toString failed';
-	}
+function configChanged(e) {
+	if (e.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
+		startOrStopFileSystemWatcher();
 }
 
 const logger = vscode.window.createOutputChannel('Workspace Wizard');
@@ -177,12 +168,23 @@ function log(msg)
 
 function popupInfo(msg)
 {
-	vscode.window.showInformationMessage(toString(msg));
+	vscode.window.showInformationMessage(popupToString(msg));
 }
 
 function popupError(msg)
 {
-	vscode.window.showErrorMessage(toString(msg));
+	vscode.window.showErrorMessage(popupToString(msg));
+}
+
+function popupToString(msg)
+{
+	try {
+		return JSON.stringify(msg);
+	} catch (err) {
+		if (typeof msg === 'object')
+			return `Object with keys: ${JSON.stringify(Object.keys(msg))}`;
+		return `Error: toString failed for ${typeof msg} (${err.name})\n$${err.message}`;
+	}
 }
 
 function refreshConfigCache(refreshIcons)
@@ -190,12 +192,13 @@ function refreshConfigCache(refreshIcons)
 	config = vscode.workspace.getConfiguration().get('workspaceWizard');
 }
 
-function startOrStopFileSystemWatcher(e)
+function simplifyWorkspace(name)
 {
-	// If triggered by an unrelated configuration change, then skip
-	if (e !== undefined && !e.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
-		return;
+	return name.slice(0, -15);
+}
 
+function startOrStopFileSystemWatcher()
+{
 	// If the user wants to watch for changes
 	refreshConfigCache();
 	if (config.sidebar.watchForChanges) {
@@ -231,19 +234,23 @@ function startOrStopFileSystemWatcher(e)
 	}
 }
 
+
+//
+// Extension Commands Not in Command Palette
+//
+
 function openWorkspaceInCurrentWindow(item)
 {
-	vscode.commands.executeCommand('vscode.openFolder', item.uri, false);
+	vscode.commands.executeCommand('vscode.openFolder', item.uri, {forceNewWindow: false});
 }
 
 function openWorkspaceInNewWindow(item)
 {
-	vscode.commands.executeCommand('vscode.openFolder', item.uri, true);
+	vscode.commands.executeCommand('vscode.openFolder', item.uri, {forceNewWindow: true});
 }
 
-
 //
-// Extension Commands
+// Extension Commands in Command Palette
 //
 
 async function selectWorkspacesFolder()
@@ -269,17 +276,17 @@ function open(item)
 {
 	// Decide where to open
 	refreshConfigCache();
-	let defaultOpenAction;
+	let openInNewWindow;
 	if (item instanceof WorkspaceFileTreeItem)
-		defaultOpenAction = config.sidebar.defaultOpenAction;
+		openInNewWindow = config.sidebar.openInNewWindow;
 	else if (item)
-		defaultOpenAction = config.quickPick.defaultOpenAction;
+		openInNewWindow = config.quickPick.openInNewWindow;
 
 	// Open
-	if (defaultOpenAction === 'Open in Current Window')
-		openWorkspaceInCurrentWindow(item);
-	else if (defaultOpenAction === 'Open in New Window')
+	if (openInNewWindow)
 		openWorkspaceInNewWindow(item);
+	else
+		openWorkspaceInCurrentWindow(item);
 }
 
 async function quickPickWorkspace(uri)
@@ -404,6 +411,16 @@ function activate(_context)
 			'workspaceWizard.open',
 			open
 		),
+		// Hidden commands
+		vscode.commands.registerCommand(
+			'workspaceWizard.openWorkspaceInCurrentWindow',
+			openWorkspaceInCurrentWindow
+		),
+		// Hidden commands
+		vscode.commands.registerCommand(
+			'workspaceWizard.openWorkspaceInNewWindow',
+			openWorkspaceInNewWindow
+		),
 	);
 
 	// Open the workspaces on startup
@@ -416,7 +433,7 @@ function activate(_context)
 
 	// Watch file system for changes to the workspaces folder
 	startOrStopFileSystemWatcher();
-	vscode.workspace.onDidChangeConfiguration(startOrStopFileSystemWatcher);
+	vscode.workspace.onDidChangeConfiguration(configChanged);
 }
 
 function deactivate()
@@ -432,7 +449,7 @@ module.exports = {
 
 // TODO
 
-// Add button for alternative action (open in current/new window)
+// Add quick pick button for alternative action (open in current/new window)
 
 // Implement expandFolders to support the new options
 
