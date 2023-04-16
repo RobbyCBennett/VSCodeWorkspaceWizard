@@ -64,19 +64,21 @@ class WorkspaceTreeDataProvider
 				return resolve([]);
 
 			// Create tree items for files
-			const treeItems = [];
+			const quickPickItems = [];
 			for (const [name, fileType] of files) {
 				// File
 				if (fileType & vscode.FileType.File) {
-					if (/\.code-workspace$/.test(name))
-						treeItems.push(new WorkspaceFileTreeItem(uri, name));
+					if (/\.code-workspace$/.test(name)) {
+						quickPickItems.push(new WorkspaceFileTreeItem(uri, name));
+					}
 				}
 				// Folder
-				else
-					treeItems.push(new SubFolderTreeItem(uri, name));
+				else {
+					quickPickItems.push(new SubFolderTreeItem(uri, name));
+				}
 			}
 
-			return resolve(treeItems);
+			return resolve(quickPickItems);
 		});
 	}
 
@@ -193,9 +195,9 @@ function startOrStopFileSystemWatcher(e)
 		const ignoreDelete = false;
 		watcher = vscode.workspace.createFileSystemWatcher(
 			globPattern, ignoreCreate, ignoreChange, ignoreDelete);
-		// TODO: Try adding parameters to tree.refresh to make this more efficient
-		watcher.onDidCreate((files) => { tree.refresh(); });
-		watcher.onDidDelete((files) => { tree.refresh(); });
+		// TODO: Add parameters to refresh more efficiently
+		watcher.onDidCreate(refreshWorkspacesSidebar);
+		watcher.onDidDelete(refreshWorkspacesSidebar);
 	}
 	// If the user wants to watch for changes
 	else {
@@ -207,6 +209,16 @@ function startOrStopFileSystemWatcher(e)
 		watcher.dispose();
 		watcher = undefined;
 	}
+}
+
+function openWorkspaceInCurrentWindow(item)
+{
+	vscode.commands.executeCommand('vscode.openFolder', item.uri, false);
+}
+
+function openWorkspaceInNewWindow(item)
+{
+	vscode.commands.executeCommand('vscode.openFolder', item.uri, true);
 }
 
 
@@ -229,7 +241,7 @@ async function selectWorkspacesFolder()
 	if (uris && uris.length) {
 		await context.globalState.update(KEY_WORKSPACES_FOLDER, uris[0].fsPath);
 		startOrStopFileSystemWatcher();
-		tree.refresh();
+		refreshWorkspacesSidebar();
 	}
 }
 
@@ -238,10 +250,10 @@ function open(item)
 	// Decide where to open
 	refreshConfigCache();
 	let defaultOpenAction;
-	if (false) // TODO quick pick
-		defaultOpenAction = config.quickPick.defaultOpenAction;
-	else if (item instanceof WorkspaceFileTreeItem)
+	if (item instanceof WorkspaceFileTreeItem)
 		defaultOpenAction = config.sidebar.defaultOpenAction;
+	else if (item)
+		defaultOpenAction = config.quickPick.defaultOpenAction;
 
 	// Open
 	if (defaultOpenAction === 'Open in Current Window')
@@ -250,17 +262,82 @@ function open(item)
 		openWorkspaceInNewWindow(item);
 }
 
-function openWorkspaceInCurrentWindow(item)
+async function quickPickWorkspace(uri)
 {
-	vscode.commands.executeCommand('vscode.openFolder', item.uri, false);
+	// Get path of the workspaces folder
+	const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
+	if (!uri) {
+		if (!workspacesFolder)
+			return popupInfo('Run the command "Select Workspaces Folder"');
+		refreshConfigCache();
+		uri = vscode.Uri.file(workspacesFolder);
+	}
+
+	// Add .. as the first quick pick item, if it's not the workspaces folder
+	const quickPickItems = [];
+	if (uri.fsPath !== workspacesFolder) {
+		quickPickItems.push({
+			// QuickPickItem data
+			label: '$(folder) ..',
+			description: 'Folder',
+
+			// Custom data
+			isWorkspaceFile: false,
+			uri: vscode.Uri.joinPath(uri, '..'),
+		});
+	}
+
+	// Add other children of the folder as quick pick items
+	try {
+		const additionalFiles = await vscode.workspace.fs.readDirectory(uri);
+		for (const [name, fileType] of additionalFiles) {
+			// File
+			if (fileType & vscode.FileType.File) {
+				if (/\.code-workspace$/.test(name)) {
+					quickPickItems.push({
+						// QuickPickItem data
+						label: `$(folder-library) ${name.slice(0, -15)}`,
+						description: 'Workspace',
+
+						// Custom data
+						isWorkspaceFile: true,
+						uri: vscode.Uri.joinPath(uri, name),
+					});
+				}
+			}
+			// Folder
+			else {
+				quickPickItems.push({
+					// QuickPickItem data
+					label: `$(folder) ${name}`,
+					description: 'Folder',
+
+					// Custom data
+					isWorkspaceFile: false,
+					uri: vscode.Uri.joinPath(uri, name),
+				});
+			}
+		}
+	} catch (error) {
+		popupError(`Unable to open ${uri.fsPath}`);
+	}
+
+	log(quickPickItems);
+
+	// Wait for the user
+	const picked = await vscode.window.showQuickPick(quickPickItems, {title: 'Workspaces'});
+	if (!picked)
+		return;
+
+	// Execute the command
+	if (picked.isWorkspaceFile)
+		open(picked);
+	// Recursively display the folders
+	else
+		quickPickWorkspace(picked.uri);
 }
 
-function openWorkspaceInNewWindow(item)
-{
-	vscode.commands.executeCommand('vscode.openFolder', item.uri, true);
-}
-
-function refresh()
+function refreshWorkspacesSidebar()
 {
 	tree.refresh();
 }
@@ -284,16 +361,22 @@ function activate(_context)
 
 		// Commands
 		vscode.commands.registerCommand(
+			'workspaceWizard.quickPickWorkspace',
+			quickPickWorkspace
+		),
+		vscode.commands.registerCommand(
+			'workspaceWizard.refreshWorkspacesSidebar',
+			refreshWorkspacesSidebar
+		),
+		vscode.commands.registerCommand(
 			'workspaceWizard.selectWorkspacesFolder',
 			selectWorkspacesFolder
 		),
+
+		// Hidden commands
 		vscode.commands.registerCommand(
 			'workspaceWizard.open',
 			open
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard.refresh',
-			refresh
 		),
 	);
 
@@ -301,7 +384,7 @@ function activate(_context)
 	const isExisting = vscode.workspace.name ? true : false;
 	const startAction = isExisting ? config.general.startOnExistingWindow : config.general.startOnNewWindow;
 	if (startAction === 'QuickPick')
-		popupInfo('TODO OPEN QUICK PICK');
+		quickPickWorkspace();
 	else if (startAction === 'Sidebar')
 		vscode.commands.executeCommand('workbench.view.extension.workspaceWizard');
 
@@ -323,11 +406,8 @@ module.exports = {
 
 // TODO
 
-// Fix the problem where focus is lost when first loading
-// workbench.action.focusSideBar
-
-// Implement a quick pick menu
-
-// Implement showFolders
+// Add button for alternative action (open in current/new window)
 
 // Implement expandFolders to support the new options
+
+// Implement showFolders

@@ -30,13 +30,17 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "workspaceWizard.selectWorkspacesFolder",
-				"title": "Select Workspaces Folder"
+				"command": "workspaceWizard.quickPickWorkspace",
+				"title": "Quick Pick Workspace"
 			},
 			{
-				"command": "workspaceWizard.refresh",
-				"title": "Refresh",
+				"command": "workspaceWizard.refreshWorkspacesSidebar",
+				"title": "Refresh Workspaces Sidebar",
 				"icon": "$(refresh)"
+			},
+			{
+				"command": "workspaceWizard.selectWorkspacesFolder",
+				"title": "Select Workspaces Folder"
 			}
 		],
 		"configuration": {
@@ -50,7 +54,7 @@
 				},
 				"workspaceWizard.general.startOnNewWindow": {
 					"type": "string",
-					"default": "Sidebar",
+					"default": "QuickPick",
 					"enum": ["None", "QuickPick", "Sidebar"],
 					"description": "Start with workspaces when a new/blank window is opened"
 				},
@@ -100,7 +104,7 @@
 					"when": "view == workspaceWizard"
 				},
 				{
-					"command": "workspaceWizard.refresh",
+					"command": "workspaceWizard.refreshWorkspacesSidebar",
 					"when": "view == workspaceWizard",
 					"group": "navigation"
 				}
