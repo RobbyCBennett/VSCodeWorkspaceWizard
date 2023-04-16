@@ -76,21 +76,21 @@ class WorkspaceTreeDataProvider
 				return resolve([]);
 
 			// Create tree items for files
-			const quickPickItems = [];
+			const treeItems = [];
 			for (const [name, fileType] of files) {
 				// File
 				if (fileType & vscode.FileType.File) {
 					if (/\.code-workspace$/.test(name)) {
-						quickPickItems.push(new WorkspaceFileTreeItem(uri, name));
+						treeItems.push(new WorkspaceFileTreeItem(uri, name));
 					}
 				}
 				// Folder
 				else {
-					quickPickItems.push(new FolderTreeItem(uri, name));
+					treeItems.push(new FolderTreeItem(uri, name));
 				}
 			}
 
-			return resolve(quickPickItems);
+			return resolve(treeItems);
 		});
 	}
 
@@ -152,6 +152,38 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 
 
 //
+// Quick Pick Items
+//
+
+class FolderQuickPickItem
+{
+	constructor(uri, name, icon)
+	{
+		// QuickPickItem
+		this.label = `${icon}${name}`;
+		this.description = 'Folder';
+
+		// Custom
+		this.uri = vscode.Uri.joinPath(uri, name);
+	}
+}
+
+class WorkspaceFileQuickPickItem
+{
+	constructor(uri, name, icon)
+	{
+		// QuickPickItem
+		this.label = `${icon}${simplifyWorkspace(name)}`;
+		this.description = 'Folder';
+		// this.buttons: [], // TODO
+
+		// Custom
+		this.uri = vscode.Uri.joinPath(uri, name);
+	}
+}
+
+
+//
 // Helper Functions
 //
 
@@ -163,7 +195,7 @@ function configChanged(e) {
 const logger = vscode.window.createOutputChannel('Workspace Wizard');
 function log(msg)
 {
-	logger.appendLine(toString(msg));
+	logger.appendLine(popupToString(msg));
 }
 
 function popupInfo(msg)
@@ -310,17 +342,8 @@ async function quickPickWorkspace(uri)
 
 	// Add .. as the first quick pick item, if it's not the workspaces folder
 	const quickPickItems = [];
-	if (uri.fsPath !== workspacesFolder) {
-		quickPickItems.push({
-			// QuickPickItem data
-			label: `${folderIcon}..`,
-			description: 'Folder',
-
-			// Custom data
-			isWorkspaceFile: false,
-			uri: vscode.Uri.joinPath(uri, '..'),
-		});
-	}
+	if (uri.fsPath !== workspacesFolder)
+		quickPickItems.push(new FolderQuickPickItem(uri, '..', folderIcon));
 
 	// Add other children of the folder as quick pick items
 	try {
@@ -329,28 +352,12 @@ async function quickPickWorkspace(uri)
 			// File
 			if (fileType & vscode.FileType.File) {
 				if (/\.code-workspace$/.test(name)) {
-					quickPickItems.push({
-						// QuickPickItem data
-						label: `${workspaceIcon}${simplifyWorkspace(name)}`,
-						description: 'Workspace',
-
-						// Custom data
-						isWorkspaceFile: true,
-						uri: vscode.Uri.joinPath(uri, name),
-					});
+					quickPickItems.push(new WorkspaceFileQuickPickItem(uri, name, workspaceIcon));
 				}
 			}
 			// Folder
 			else {
-				quickPickItems.push({
-					// QuickPickItem data
-					label: `${folderIcon}${name}`,
-					description: 'Folder',
-
-					// Custom data
-					isWorkspaceFile: false,
-					uri: vscode.Uri.joinPath(uri, name),
-				});
+				quickPickItems.push(new FolderQuickPickItem(uri, name, folderIcon));
 			}
 		}
 	} catch (error) {
@@ -362,12 +369,12 @@ async function quickPickWorkspace(uri)
 	if (!picked)
 		return;
 
-	// Execute the command
-	if (picked.isWorkspaceFile)
-		open(picked);
 	// Recursively display the folders
-	else
+	if (picked instanceof FolderQuickPickItem)
 		quickPickWorkspace(picked.uri);
+	// Open the workspace
+	else if (picked instanceof WorkspaceFileQuickPickItem)
+		open(picked);
 }
 
 function refreshWorkspacesSidebar()
