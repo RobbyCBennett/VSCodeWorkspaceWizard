@@ -5,6 +5,9 @@ const vscode = require('vscode');
 // Constants
 //
 
+const ICON_CURRENT_WINDOW_OBJ = new vscode.ThemeIcon('window');
+const ICON_NEW_WINDOW_OBJ     = new vscode.ThemeIcon('empty-window');
+
 const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
 const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
 
@@ -17,6 +20,7 @@ let config;
 let context;
 let iconSidebarFolderObj;
 let iconSidebarWorkspaceObj;
+let quickPick;
 let tree;
 let watcher;
 
@@ -155,6 +159,21 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 // Quick Pick Items
 //
 
+class OpenQuickInputButton
+{
+	constructor()
+	{
+		if (config.quickPick.openInNewWindow) {
+			this.iconPath = ICON_CURRENT_WINDOW_OBJ;
+			this.tooltip = 'Open Workspace in Current Window';
+		}
+		else {
+			this.iconPath = ICON_NEW_WINDOW_OBJ;
+			this.tooltip = 'Open Workspace in New Window';
+		}
+	}
+}
+
 class FolderQuickPickItem
 {
 	constructor(uri, name, icon)
@@ -164,6 +183,7 @@ class FolderQuickPickItem
 		this.description = 'Folder';
 
 		// Custom
+		this.isFolder = true;
 		this.uri = vscode.Uri.joinPath(uri, name);
 	}
 }
@@ -175,9 +195,10 @@ class WorkspaceFileQuickPickItem
 		// QuickPickItem
 		this.label = `${icon}${simplifyWorkspace(name)}`;
 		this.description = 'Folder';
-		// this.buttons: [], // TODO
+		this.buttons = [new OpenQuickInputButton()];
 
 		// Custom
+		this.isFolder = false;
 		this.uri = vscode.Uri.joinPath(uri, name);
 	}
 }
@@ -332,6 +353,35 @@ async function quickPickWorkspace(uri)
 		uri = vscode.Uri.file(workspacesFolder);
 	}
 
+	// Initialize
+	if (!quickPick) {
+		quickPick = vscode.window.createQuickPick();
+		quickPick.buttons = [];
+		quickPick.title = 'Workspaces';
+		quickPick.onDidChangeSelection(function(quickPickItems) {
+			const quickPickItem = quickPickItems[0];
+			if (quickPickItem.isFolder)
+				quickPickWorkspace(quickPickItem.uri);
+			else
+				open(quickPickItem);
+		});
+		quickPick.onDidHide(function() {
+			quickPick.dispose();
+			quickPick = undefined;
+		});
+		quickPick.onDidTriggerItemButton(function(e) {
+			if (config.quickPick.openInNewWindow)
+				openWorkspaceInCurrentWindow(e.item);
+			else
+				openWorkspaceInNewWindow(e.item);
+		});
+	}
+	quickPick.busy = true;
+	quickPick.items = [];
+	quickPick.show();
+
+	const quickPickItems = [];
+
 	// Icons
 	const folderIcon = config.quickPick.icon.folder
 		? `$(${config.quickPick.icon.folder}) `
@@ -341,9 +391,13 @@ async function quickPickWorkspace(uri)
 		: '';
 
 	// Add .. as the first quick pick item, if it's not the workspaces folder
-	const quickPickItems = [];
-	if (uri.fsPath !== workspacesFolder)
-		quickPickItems.push(new FolderQuickPickItem(uri, '..', folderIcon));
+	if (uri.fsPath !== workspacesFolder) {
+		quickPick.items.push(new FolderQuickPickItem(uri, '..', folderIcon));
+		quickPick.buttons = [vscode.QuickInputButtons.Back];
+		quickPick.onDidTriggerButton(function() {
+			quickPickWorkspace(quickPick.items[0].uri);
+		});
+	}
 
 	// Add other children of the folder as quick pick items
 	try {
@@ -352,29 +406,21 @@ async function quickPickWorkspace(uri)
 			// File
 			if (fileType & vscode.FileType.File) {
 				if (/\.code-workspace$/.test(name)) {
-					quickPickItems.push(new WorkspaceFileQuickPickItem(uri, name, workspaceIcon));
+					quickPick.items.push(new WorkspaceFileQuickPickItem(uri, name, workspaceIcon));
 				}
 			}
 			// Folder
 			else {
-				quickPickItems.push(new FolderQuickPickItem(uri, name, folderIcon));
+				quickPick.items.push(new FolderQuickPickItem(uri, name, folderIcon));
 			}
 		}
 	} catch (error) {
 		popupError(`Unable to open ${uri.fsPath}`);
 	}
 
-	// Wait for the user
-	const picked = await vscode.window.showQuickPick(quickPickItems, {title: 'Workspaces'});
-	if (!picked)
-		return;
-
-	// Recursively display the folders
-	if (picked instanceof FolderQuickPickItem)
-		quickPickWorkspace(picked.uri);
-	// Open the workspace
-	else if (picked instanceof WorkspaceFileQuickPickItem)
-		open(picked);
+	// Show the items and remove the loading indicator
+	quickPick.items = quickPick.items;
+	quickPick.busy = false;
 }
 
 function refreshWorkspacesSidebar()
@@ -455,8 +501,6 @@ module.exports = {
 
 
 // TODO
-
-// Add quick pick button for alternative action (open in current/new window)
 
 // Implement expandFolders to support the new options
 
