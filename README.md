@@ -4,11 +4,11 @@
 
 # Setup
 
-1. If you're unfamiliar workspaces, then read about them [here](https://code.visualstudio.com/docs/editor/workspaces), and create them with the command **Workspaces: Save Workspace As...** (find it using the [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette))
+1. If you're unfamiliar workspaces, then read about them [here](https://code.visualstudio.com/docs/editor/workspaces), and create them with the command **_Workspaces: Save Workspace As_...** (find it using the [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette))
 
 2. If you don't have one already, create a folder and move any .code-workspace files into it. You may organize by creating any amount of sub-folders.
 
-3. Run the command **Workspace Wizard: Select Workspaces Folder** and select it
+3. Run the command **_Workspace Wizard: Select Workspaces Folder_** and select it
 
 # Features
 
