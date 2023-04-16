@@ -87,7 +87,7 @@
 
 				"workspaceWizard.sidebar.expandFolders": {
 					"type": "string",
-					"default": "All Folders",
+					"default": "Expanded Last Time",
 					"enum": ["All Folders", "Expanded Last Time", "None"],
 					"description": "Automatically expand folders in the sidebar"
 				},

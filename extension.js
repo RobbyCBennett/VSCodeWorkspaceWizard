@@ -16,12 +16,14 @@ const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
 // Temporary Data
 //
 
+
 let config;
 let context;
+let expandedFolders;
 let iconSidebarFolderObj;
 let iconSidebarWorkspaceObj;
 let quickPick;
-let tree;
+let treeDataProvider;
 let watcher;
 
 
@@ -114,19 +116,29 @@ class FolderTreeItem extends vscode.TreeItem
 {
 	constructor(uri, name)
 	{
-		super(
-			name,
-			config.sidebar.expandFolders
-				? vscode.TreeItemCollapsibleState.Expanded
-				: vscode.TreeItemCollapsibleState.Collapsed
-		);
+		uri = vscode.Uri.joinPath(uri, name);
+
+		// Collapsed
+		let collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+		if (config.sidebar.expandFolders === 'All Folders') {
+			collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+		}
+		else if (config.sidebar.expandFolders === 'Expanded Last Time') {
+			if (expandedFolders.has(uri.fsPath)) {
+				collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+			}
+		}
 
 		// TreeItem
+		super(
+			name,
+			collapsibleState,
+		);
 		this.contextValue = 'folder';
 		this.iconPath = iconSidebarFolderObj;
 
 		// Custom
-		this.uri = vscode.Uri.joinPath(uri, name);
+		this.uri = uri;
 	}
 }
 
@@ -134,12 +146,13 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 {
 	constructor(uri, name)
 	{
+		uri = vscode.Uri.joinPath(uri, name);
+
+		// TreeItem
 		super(
 			simplifyWorkspace(name),
 			vscode.TreeItemCollapsibleState.None
 		);
-
-		// TreeItem
 		this.command = {
 			arguments: [this],
 			command: 'workspaceWizard.open',
@@ -150,7 +163,7 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 		this.iconPath = iconSidebarWorkspaceObj;
 
 		// Custom
-		this.uri = vscode.Uri.joinPath(uri, name);
+		this.uri = uri;
 	}
 }
 
@@ -231,6 +244,13 @@ function popupError(msg)
 
 function popupToString(msg)
 {
+	if (msg instanceof Set) {
+		const parts = [msg.toString()];
+		for (const value of msg)
+			parts.push(`	${value}`);
+		return parts.join('\n');
+	}
+
 	try {
 		return JSON.stringify(msg);
 	} catch (err) {
@@ -243,6 +263,14 @@ function popupToString(msg)
 function refreshConfigCache(refreshIcons)
 {
 	config = vscode.workspace.getConfiguration().get('workspaceWizard');
+}
+
+function saveExpandedFolders()
+{
+	const values = [];
+	for (const value of expandedFolders)
+		values.push(value);
+	context.globalState.update(KEY_EXPANDED_FOLDERS, values);
 }
 
 function simplifyWorkspace(name)
@@ -380,8 +408,6 @@ async function quickPickWorkspace(uri)
 	quickPick.items = [];
 	quickPick.show();
 
-	const quickPickItems = [];
-
 	// Icons
 	const folderIcon = config.quickPick.icon.folder
 		? `$(${config.quickPick.icon.folder}) `
@@ -425,7 +451,7 @@ async function quickPickWorkspace(uri)
 
 function refreshWorkspacesSidebar()
 {
-	tree.refresh();
+	treeDataProvider.refresh();
 }
 
 
@@ -437,13 +463,13 @@ function activate(_context)
 {
 	// Temporary data
 	context = _context;
-	tree = new WorkspaceTreeDataProvider();
+	treeDataProvider = new WorkspaceTreeDataProvider();
 	refreshConfigCache();
 
 	// Register
 	context.subscriptions.push(
 		// Tree data provider
-		vscode.window.registerTreeDataProvider('workspaceWizard', tree),
+		vscode.window.registerTreeDataProvider('workspaceWizard', treeDataProvider),
 
 		// Commands
 		vscode.commands.registerCommand(
@@ -476,6 +502,12 @@ function activate(_context)
 		),
 	);
 
+	// Tree view
+	const treeView = vscode.window.createTreeView(
+		'workspaceWizard',
+		{ treeDataProvider: treeDataProvider }
+	);
+
 	// Open the workspaces on startup
 	const isExisting = vscode.workspace.name ? true : false;
 	const startAction = isExisting ? config.general.startOnExistingWindow : config.general.startOnNewWindow;
@@ -483,6 +515,23 @@ function activate(_context)
 		quickPickWorkspace();
 	else if (startAction === 'Sidebar')
 		vscode.commands.executeCommand('workbench.view.extension.workspaceWizard');
+
+	// Get tree view collapse/expand status from storage
+	expandedFolders = new Set(context.globalState.get(KEY_EXPANDED_FOLDERS) || []);
+
+	// Save tree view collapse/expand changes to storage
+	treeView.onDidCollapseElement(function(e) {
+		if (expandedFolders.has(e.element.uri.fsPath)) {
+			expandedFolders.delete(e.element.uri.fsPath);
+			saveExpandedFolders();
+		}
+	});
+	treeView.onDidExpandElement(function(e) {
+		if (!expandedFolders.has(e.element.uri.fsPath)) {
+			expandedFolders.add(e.element.uri.fsPath);
+			saveExpandedFolders();
+		}
+	});
 
 	// Watch file system for changes to the workspaces folder
 	startOrStopFileSystemWatcher();
@@ -501,7 +550,5 @@ module.exports = {
 
 
 // TODO
-
-// Implement expandFolders to support the new options
 
 // Prepend 'Workspace Wizard: ' to all commands in the command palette
