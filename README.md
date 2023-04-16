@@ -1,6 +1,6 @@
 # Workspace Wizard
 
-*Easily create, organize, & switch workspaces*
+*Easily organize & switch workspaces*
 
 # Setup
 

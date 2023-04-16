@@ -1,7 +1,7 @@
 {
 	"name": "workspaceWizard",
 	"displayName": "Workspace Wizard",
-	"description": "Easily create, organize, & switch workspaces",
+	"description": "Easily organize & switch workspaces",
 	"version": "1.0.0",
 	"publisher": "rob-bennett",
 	"repository": {
