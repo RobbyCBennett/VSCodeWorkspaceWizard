@@ -38,7 +38,7 @@ In the [command palette](https://code.visualstudio.com/docs/getstarted/userinter
 
 * **Workspace Wizard: Refresh Workspaces Sidebar**
 	* Refresh the Workspaces tree sidebar
-	* (Not necessary if you have enabled the setting `workspaceWizard.sidebar.watchForChanges`)
+	* (Not necessary if you have enabled the setting **_Workspace Wizard >Sidebar >Watch for Changes_**)
 
 * **Workspace Wizard: Select Workspaces Folder**
 	* Select the folder that has your .code-workspace files
