@@ -58,11 +58,6 @@
 					"enum": ["None", "QuickPick", "Sidebar"],
 					"description": "Start with workspaces when a new/blank window is opened"
 				},
-				"workspaceWizard.general.watchForChanges": {
-					"type": "boolean",
-					"default": false,
-					"description": "Watch for changes to the workspaces folder and its descendants"
-				},
 
 				"workspaceWizard.quickPick.defaultOpenAction": {
 					"type": "string",
@@ -70,11 +65,15 @@
 					"enum": ["Open in Current Window", "Open in New Window"],
 					"description": "What happens when a workspace is clicked or enter is pressed"
 				},
-				"workspaceWizard.quickPick.showFolders": {
+				"workspaceWizard.quickPick.icon.folder": {
 					"type": "string",
-					"default": "All Folders",
-					"enum": ["All Folders", "Folders with Workspace Files", "No Folders"],
-					"description": "Show folders in the quick pick, otherwise flatten the tree"
+					"default": "folder",
+					"description": "Icon identifier for folders in the quick pick"
+				},
+				"workspaceWizard.quickPick.icon.workspace": {
+					"type": "string",
+					"default": "folder-library",
+					"description": "Icon identifier for workspaces in the quick pick"
 				},
 
 				"workspaceWizard.sidebar.defaultOpenAction": {
@@ -89,11 +88,20 @@
 					"enum": ["All Folders", "Expanded Last Time", "None"],
 					"description": "Automatically expand folders in the sidebar"
 				},
-				"workspaceWizard.sidebar.showFolders": {
+				"workspaceWizard.sidebar.icon.folder": {
 					"type": "string",
-					"default": "All Folders",
-					"enum": ["All Folders", "Folders with Workspace Files", "No Folders"],
-					"description": "Show folders in the sidebar, otherwise flatten the tree"
+					"default": "",
+					"description": "Icon identifier for folders in the sidebar"
+				},
+				"workspaceWizard.sidebar.icon.workspace": {
+					"type": "string",
+					"default": "",
+					"description": "Icon identifier for workspaces in the sidebar"
+				},
+				"workspaceWizard.sidebar.watchForChanges": {
+					"type": "boolean",
+					"default": false,
+					"description": "Watch for changes to the workspaces folder and its descendants"
 				}
 			}
 		},

@@ -5,8 +5,6 @@ const vscode = require('vscode');
 // Constants
 //
 
-const ICON_WORKSPACE_OBJ = new vscode.ThemeIcon('folder-library');
-
 const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
 const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
 
@@ -17,6 +15,8 @@ const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
 
 let config;
 let context;
+let iconSidebarFolderObj;
+let iconSidebarWorkspaceObj;
 let tree;
 let watcher;
 
@@ -50,6 +50,16 @@ class WorkspaceTreeDataProvider
 					return resolve([]);
 				}
 				uri = vscode.Uri.file(workspacesFolder);
+
+				// Create icons
+				if (config.sidebar.icon.folder)
+					iconSidebarFolderObj = new vscode.ThemeIcon(config.sidebar.icon.folder);
+				else
+					iconSidebarFolderObj = undefined;
+				if (config.sidebar.icon.workspace)
+					iconSidebarWorkspaceObj = new vscode.ThemeIcon(config.sidebar.icon.workspace);
+				else
+					iconSidebarWorkspaceObj = undefined;
 			}
 			// Get path of a sub-folder
 			else
@@ -76,7 +86,7 @@ class WorkspaceTreeDataProvider
 				}
 				// Folder
 				else {
-					quickPickItems.push(new SubFolderTreeItem(uri, name));
+					quickPickItems.push(new FolderTreeItem(uri, name));
 				}
 			}
 
@@ -96,7 +106,7 @@ class WorkspaceTreeDataProvider
 	}
 }
 
-class SubFolderTreeItem extends vscode.TreeItem
+class FolderTreeItem extends vscode.TreeItem
 {
 	constructor(uri, name)
 	{
@@ -109,6 +119,7 @@ class SubFolderTreeItem extends vscode.TreeItem
 
 		// TreeItem
 		this.contextValue = 'folder';
+		this.iconPath = iconSidebarFolderObj;
 
 		// Custom
 		this.uri = vscode.Uri.joinPath(uri, name);
@@ -120,7 +131,7 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 	constructor(uri, name)
 	{
 		super(
-			name.slice(0, -15),
+			simplifyWorkspace(name),
 			vscode.TreeItemCollapsibleState.None
 		);
 
@@ -132,7 +143,7 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 			tooltip: 'Open workspace tooltip',
 		};
 		this.contextValue = 'workspace';
-		this.iconPath = ICON_WORKSPACE_OBJ;
+		this.iconPath = iconSidebarWorkspaceObj;
 
 		// Custom
 		this.uri = vscode.Uri.joinPath(uri, name);
@@ -143,6 +154,11 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 //
 // Helper Functions
 //
+
+function simplifyWorkspace(name)
+{
+	return name.slice(0, -15);
+}
 
 function toString(msg)
 {
@@ -169,7 +185,7 @@ function popupError(msg)
 	vscode.window.showErrorMessage(toString(msg));
 }
 
-function refreshConfigCache()
+function refreshConfigCache(refreshIcons)
 {
 	config = vscode.workspace.getConfiguration().get('workspaceWizard');
 }
@@ -177,12 +193,12 @@ function refreshConfigCache()
 function startOrStopFileSystemWatcher(e)
 {
 	// If triggered by an unrelated configuration change, then skip
-	if (e !== undefined && !e.affectsConfiguration('workspaceWizard.general.watchForChanges'))
+	if (e !== undefined && !e.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
 		return;
 
 	// If the user wants to watch for changes
 	refreshConfigCache();
-	if (config.general.watchForChanges) {
+	if (config.sidebar.watchForChanges) {
 		// Skip if it's already been started
 		if (watcher !== undefined)
 			return;
@@ -277,12 +293,20 @@ async function quickPickWorkspace(uri)
 		uri = vscode.Uri.file(workspacesFolder);
 	}
 
+	// Icons
+	const folderIcon = config.quickPick.icon.folder
+		? `$(${config.quickPick.icon.folder}) `
+		: '';
+	const workspaceIcon = config.quickPick.icon.workspace
+		? `$(${config.quickPick.icon.workspace}) `
+		: '';
+
 	// Add .. as the first quick pick item, if it's not the workspaces folder
 	const quickPickItems = [];
 	if (uri.fsPath !== workspacesFolder) {
 		quickPickItems.push({
 			// QuickPickItem data
-			label: '$(folder) ..',
+			label: `${folderIcon}..`,
 			description: 'Folder',
 
 			// Custom data
@@ -300,7 +324,7 @@ async function quickPickWorkspace(uri)
 				if (/\.code-workspace$/.test(name)) {
 					quickPickItems.push({
 						// QuickPickItem data
-						label: `$(folder-library) ${name.slice(0, -15)}`,
+						label: `${workspaceIcon}${simplifyWorkspace(name)}`,
 						description: 'Workspace',
 
 						// Custom data
@@ -313,7 +337,7 @@ async function quickPickWorkspace(uri)
 			else {
 				quickPickItems.push({
 					// QuickPickItem data
-					label: `$(folder) ${name}`,
+					label: `${folderIcon}${name}`,
 					description: 'Folder',
 
 					// Custom data
@@ -408,10 +432,6 @@ module.exports = {
 
 // TODO
 
-// Add customization for buttons
-
 // Add button for alternative action (open in current/new window)
 
 // Implement expandFolders to support the new options
-
-// Implement showFolders
