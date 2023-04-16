@@ -2,8 +2,10 @@ const vscode = require('vscode');
 
 
 //
-// Persistent Data
+// Constants
 //
+
+const ICON_WORKSPACE_OBJ = new vscode.ThemeIcon('folder-library');
 
 const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
 const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
@@ -96,9 +98,6 @@ class WorkspaceTreeDataProvider
 
 class SubFolderTreeItem extends vscode.TreeItem
 {
-	contextValue;
-	uri;
-
 	constructor(uri, name)
 	{
 		super(
@@ -107,30 +106,35 @@ class SubFolderTreeItem extends vscode.TreeItem
 				? vscode.TreeItemCollapsibleState.Expanded
 				: vscode.TreeItemCollapsibleState.Collapsed
 		);
-		this.contextValue = 'folder'
+
+		// TreeItem
+		this.contextValue = 'folder';
+
+		// Custom
 		this.uri = vscode.Uri.joinPath(uri, name);
 	}
 }
 
 class WorkspaceFileTreeItem extends vscode.TreeItem
 {
-	command;
-	contextValue;
-	uri;
-
 	constructor(uri, name)
 	{
 		super(
 			name.slice(0, -15),
 			vscode.TreeItemCollapsibleState.None
 		);
+
+		// TreeItem
 		this.command = {
 			arguments: [this],
 			command: 'workspaceWizard.open',
 			title: 'Open workspace title',
 			tooltip: 'Open workspace tooltip',
 		};
-		this.contextValue = 'workspace'
+		this.contextValue = 'workspace';
+		this.iconPath = ICON_WORKSPACE_OBJ;
+
+		// Custom
 		this.uri = vscode.Uri.joinPath(uri, name);
 	}
 }
@@ -403,6 +407,8 @@ module.exports = {
 
 
 // TODO
+
+// Add customization for buttons
 
 // Add button for alternative action (open in current/new window)
 
