@@ -435,3 +435,5 @@ module.exports = {
 // Add button for alternative action (open in current/new window)
 
 // Implement expandFolders to support the new options
+
+// Prepend 'Workspace Wizard: ' to all commands in the command palette
