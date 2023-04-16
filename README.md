@@ -46,18 +46,18 @@ In the [command palette](https://code.visualstudio.com/docs/getstarted/userinter
 # Usage: Recommended Keybindings
 
 ```jsonc
-// Open sidebar
+// Open the Workspaces sidebar
 {
 	"key": "alt+shift+w",
 	"command": "workbench.view.extension.workspaceWizard",
 },
-// Close sidebar
+// Close the sidebar
 {
 	"key": "escape",
 	"when": "sideBarFocus && !treeFindOpen",
 	"command": "workbench.action.closeSidebar",
 },
-// Open quick pick
+// Open the Workspaces quick pick
 {
 	"key": "alt+shift+w",
 	"command": "workspaceWizard.quickPickWorkspace",
