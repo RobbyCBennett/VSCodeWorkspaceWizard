@@ -30,26 +30,34 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "workspaceWizard.openWorkspaceInCurrentWindow",
+				"command": "workspaceWizard._openWorkspaceInCurrentWindow",
 				"title": "Open Workspace in Current Window",
 				"icon": "$(window)"
 			},
 			{
-				"command": "workspaceWizard.openWorkspaceInNewWindow",
+				"command": "workspaceWizard._openWorkspaceInNewWindow",
 				"title": "Open Workspace in New Window",
 				"icon": "$(empty-window)"
 			},
 			{
 				"command": "workspaceWizard.quickPickWorkspace",
-				"title": "Quick Pick Workspace"
+				"title": "Workspace Wizard: Quick Pick Workspace"
 			},
 			{
 				"command": "workspaceWizard.refreshWorkspacesSidebar",
-				"title": "Refresh Workspaces Sidebar",
+				"title": "Workspace Wizard: Refresh Workspaces Sidebar"
+			},
+			{
+				"command": "workspaceWizard._refreshWorkspacesSidebar",
+				"title": "Refresh",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "workspaceWizard.selectWorkspacesFolder",
+				"title": "Workspace Wizard: Select Workspaces Folder"
+			},
+			{
+				"command": "workspaceWizard._selectWorkspacesFolder",
 				"title": "Select Workspaces Folder"
 			}
 		],
@@ -116,35 +124,35 @@
 		"menus": {
 			"commandPalette": [
 				{
-					"command": "workspaceWizard.openWorkspaceInCurrentWindow",
+					"command": "workspaceWizard._openWorkspaceInCurrentWindow",
 					"when": "false"
 				},
 				{
-					"command": "workspaceWizard.openWorkspaceInNewWindow",
+					"command": "workspaceWizard._openWorkspaceInNewWindow",
 					"when": "false"
 				}
 			],
 			"view/item/context": [
 				{
-					"command": "workspaceWizard.openWorkspaceInCurrentWindow",
+					"command": "workspaceWizard._openWorkspaceInCurrentWindow",
 					"when": "view == workspaceWizard && viewItem == workspace && config.workspaceWizard.sidebar.openInNewWindow",
 					"group": "inline"
 				},
 				{
-					"command": "workspaceWizard.openWorkspaceInNewWindow",
+					"command": "workspaceWizard._openWorkspaceInNewWindow",
 					"when": "view == workspaceWizard && viewItem == workspace && !config.workspaceWizard.sidebar.openInNewWindow",
 					"group": "inline"
 				}
 			],
 			"view/title": [
 				{
-					"command": "workspaceWizard.selectWorkspacesFolder",
-					"when": "view == workspaceWizard"
-				},
-				{
-					"command": "workspaceWizard.refreshWorkspacesSidebar",
+					"command": "workspaceWizard._refreshWorkspacesSidebar",
 					"when": "view == workspaceWizard",
 					"group": "navigation"
+				},
+				{
+					"command": "workspaceWizard._selectWorkspacesFolder",
+					"when": "view == workspaceWizard"
 				}
 			]
 		},

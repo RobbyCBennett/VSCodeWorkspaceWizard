@@ -155,7 +155,7 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 		);
 		this.command = {
 			arguments: [this],
-			command: 'workspaceWizard.open',
+			command: 'workspaceWizard._open',
 			title: 'Open workspace title',
 			tooltip: 'Open workspace tooltip',
 		};
@@ -224,12 +224,6 @@ class WorkspaceFileQuickPickItem
 function configChanged(e) {
 	if (e.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
 		startOrStopFileSystemWatcher();
-}
-
-const logger = vscode.window.createOutputChannel('Workspace Wizard');
-function log(msg)
-{
-	logger.appendLine(popupToString(msg));
 }
 
 function popupInfo(msg)
@@ -473,6 +467,18 @@ function activate(_context)
 
 		// Commands
 		vscode.commands.registerCommand(
+			'workspaceWizard._open',
+			open
+		),
+		vscode.commands.registerCommand(
+			'workspaceWizard._openWorkspaceInCurrentWindow',
+			openWorkspaceInCurrentWindow
+		),
+		vscode.commands.registerCommand(
+			'workspaceWizard._openWorkspaceInNewWindow',
+			openWorkspaceInNewWindow
+		),
+		vscode.commands.registerCommand(
 			'workspaceWizard.quickPickWorkspace',
 			quickPickWorkspace
 		),
@@ -481,24 +487,16 @@ function activate(_context)
 			refreshWorkspacesSidebar
 		),
 		vscode.commands.registerCommand(
+			'workspaceWizard._refreshWorkspacesSidebar',
+			refreshWorkspacesSidebar
+		),
+		vscode.commands.registerCommand(
 			'workspaceWizard.selectWorkspacesFolder',
 			selectWorkspacesFolder
 		),
-
-		// Hidden commands
 		vscode.commands.registerCommand(
-			'workspaceWizard.open',
-			open
-		),
-		// Hidden commands
-		vscode.commands.registerCommand(
-			'workspaceWizard.openWorkspaceInCurrentWindow',
-			openWorkspaceInCurrentWindow
-		),
-		// Hidden commands
-		vscode.commands.registerCommand(
-			'workspaceWizard.openWorkspaceInNewWindow',
-			openWorkspaceInNewWindow
+			'workspaceWizard._selectWorkspacesFolder',
+			selectWorkspacesFolder
 		),
 	);
 
@@ -547,8 +545,3 @@ module.exports = {
 	activate,
 	deactivate
 }
-
-
-// TODO
-
-// Prepend 'Workspace Wizard: ' to all commands in the command palette
