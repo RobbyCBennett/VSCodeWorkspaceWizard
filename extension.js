@@ -207,7 +207,7 @@ class WorkspaceFileQuickPickItem
 	{
 		// QuickPickItem
 		this.label = `${icon}${simplifyWorkspace(name)}`;
-		this.description = 'Folder';
+		this.description = 'Workspace';
 		this.buttons = [new OpenQuickInputButton()];
 
 		// Custom

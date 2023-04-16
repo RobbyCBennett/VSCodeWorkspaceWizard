@@ -130,6 +130,10 @@
 				{
 					"command": "workspaceWizard._openWorkspaceInNewWindow",
 					"when": "false"
+				},
+				{
+					"command": "workspaceWizard._selectWorkspacesFolder",
+					"when": "false"
 				}
 			],
 			"view/item/context": [
