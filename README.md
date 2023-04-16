@@ -24,7 +24,7 @@
 
 * Lots of Settings
 	* Open your preferred UI for switching workspaces on startup
-	* Add icons for folders & workspaces
+	* Add generic icons for all folders and all workspaces
 	* Change the default open action: open in current window or new window
 	* Automatically expand/collapse folders of the sidebar, or remember the expanded state
 	* Watch the workspaces folder for changes, so the sidebar is always up-to-date
