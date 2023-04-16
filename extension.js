@@ -177,6 +177,7 @@ function startOrStopFileSystemWatcher(e)
 		return;
 
 	// If the user wants to watch for changes
+	refreshConfigCache();
 	if (config.general.watchForChanges) {
 		// Skip if it's already been started
 		if (watcher !== undefined)
@@ -195,7 +196,6 @@ function startOrStopFileSystemWatcher(e)
 		const ignoreDelete = false;
 		watcher = vscode.workspace.createFileSystemWatcher(
 			globPattern, ignoreCreate, ignoreChange, ignoreDelete);
-		// TODO: Add parameters to refresh more efficiently
 		watcher.onDidCreate(refreshWorkspacesSidebar);
 		watcher.onDidDelete(refreshWorkspacesSidebar);
 	}
@@ -321,8 +321,6 @@ async function quickPickWorkspace(uri)
 	} catch (error) {
 		popupError(`Unable to open ${uri.fsPath}`);
 	}
-
-	log(quickPickItems);
 
 	// Wait for the user
 	const picked = await vscode.window.showQuickPick(quickPickItems, {title: 'Workspaces'});

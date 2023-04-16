@@ -54,7 +54,7 @@
 				},
 				"workspaceWizard.general.startOnNewWindow": {
 					"type": "string",
-					"default": "QuickPick",
+					"default": "Sidebar",
 					"enum": ["None", "QuickPick", "Sidebar"],
 					"description": "Start with workspaces when a new/blank window is opened"
 				},
