@@ -52,7 +52,7 @@ class WorkspaceTreeDataProvider
 			if (!treeItem) {
 				const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
 				if (!workspacesFolder) {
-					popupInfo('Run the command "Select Workspaces Folder"');
+					popupInfo('Run the command \'Select Workspaces Folder\'');
 					return resolve([]);
 				}
 				uri = vscode.Uri.file(workspacesFolder);
@@ -368,9 +368,16 @@ async function quickPickWorkspace(uri)
 {
 	// Get path of the workspaces folder
 	const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
+
+	// If there is no current workspace/folder
 	if (!uri) {
+		// Stop if editing an existing file
+		if (vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled)
+			return;
+		// Stop with a message if there is no
 		if (!workspacesFolder)
-			return popupInfo('Run the command "Select Workspaces Folder"');
+			return popupInfo('Run the command \'Select Workspaces Folder\'');
+		// Initialize the first uri
 		refreshConfigCache();
 		uri = vscode.Uri.file(workspacesFolder);
 	}
