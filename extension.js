@@ -374,7 +374,7 @@ async function quickPickWorkspace(uri)
 		// Stop if editing an existing file
 		if (vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled)
 			return;
-		// Stop with a message if there is no
+		// Stop with a message if there is no workspaces folder
 		if (!workspacesFolder)
 			return popupInfo('Run the command \'Select Workspaces Folder\'');
 		// Initialize the first uri
