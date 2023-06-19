@@ -364,15 +364,15 @@ function open(item)
 		openWorkspaceInCurrentWindow(item);
 }
 
-async function quickPickWorkspace(uri)
+async function quickPickWorkspace(uri, startup)
 {
 	// Get path of the workspaces folder
 	const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
 
 	// If there is no current workspace/folder
 	if (!uri) {
-		// Stop if editing an existing file
-		if (vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled)
+		// Stop if starting up and editing an existing file
+		if (startup && vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled)
 			return;
 		// Stop with a message if there is no workspaces folder
 		if (!workspacesFolder)
@@ -390,7 +390,7 @@ async function quickPickWorkspace(uri)
 		quickPick.onDidChangeSelection(function(quickPickItems) {
 			const quickPickItem = quickPickItems[0];
 			if (quickPickItem.isFolder)
-				quickPickWorkspace(quickPickItem.uri);
+				quickPickWorkspace(quickPickItem.uri, false);
 			else
 				open(quickPickItem);
 		});
@@ -422,7 +422,7 @@ async function quickPickWorkspace(uri)
 		quickPick.items.push(new FolderQuickPickItem(uri, '..', folderIcon));
 		quickPick.buttons = [vscode.QuickInputButtons.Back];
 		quickPick.onDidTriggerButton(function() {
-			quickPickWorkspace(quickPick.items[0].uri);
+			quickPickWorkspace(quickPick.items[0].uri, false);
 		});
 	}
 
@@ -517,7 +517,7 @@ function activate(_context)
 	const isExisting = vscode.workspace.name ? true : false;
 	const startAction = isExisting ? config.general.startOnExistingWindow : config.general.startOnNewWindow;
 	if (startAction === 'QuickPick')
-		quickPickWorkspace();
+		quickPickWorkspace(null, true);
 	else if (startAction === 'Sidebar')
 		vscode.commands.executeCommand('workbench.view.extension.workspaceWizard');
 
