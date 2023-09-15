@@ -493,6 +493,10 @@ async function newWorkspace(uri)
 
 async function quickPickWorkspace(uri, startup)
 {
+	// Stop if already searching filesystem to avoid duplication
+	if (quickPick && quickPick.busy)
+		return;
+
 	// Get path of the workspaces folder
 	const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
 
