@@ -160,8 +160,11 @@ class WorkspaceFileTreeItem extends vscode.TreeItem
 			vscode.TreeItemCollapsibleState.None
 		);
 		this.command = {
-			arguments: [this],
-			command: 'workspaceWizard._open',
+			arguments: [{
+				uri: uri,
+				isWorkspaceFileTreeItem: true,
+			}],
+			command: 'workspaceWizard._openWorkspace',
 			title: 'Open workspace title',
 			tooltip: 'Open workspace tooltip',
 		};
@@ -412,10 +415,10 @@ async function selectWorkspacesFolder()
 
 function openWorkspace(item)
 {
-	// Decide where to open
+	// Decide between new window and current window
 	refreshConfigCache();
 	let openInNewWindow;
-	if (item instanceof WorkspaceFileTreeItem)
+	if (item.isWorkspaceFileTreeItem === true)
 		openInNewWindow = config.sidebar.openInNewWindow;
 	else if (item)
 		openInNewWindow = config.quickPick.openInNewWindow;
