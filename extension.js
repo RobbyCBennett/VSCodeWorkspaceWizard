@@ -32,11 +32,11 @@ const QUICK_SELECT_BUTTON_ACTION_NEW_WORKSPACE = true;
 let config;
 let context;
 let expandedFolders;
+let iconQuickPickFolderObj;
+let iconQuickPickWorkspaceObj;
 let iconSidebarFolderObj;
 let iconSidebarWorkspaceObj;
 let quickPick;
-let iconQuickPickFolderObj;
-let iconQuickPickWorkspaceObj;
 let treeDataProvider;
 let watcher;
 
@@ -66,7 +66,7 @@ class WorkspaceTreeDataProvider
 			if (!treeItem) {
 				const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
 				if (!workspacesFolder) {
-					popupInfo('Run the command \'Select Workspaces Folder\'');
+					popupInfoSelectWorkspacesFolder();
 					return resolve([]);
 				}
 				uri = vscode.Uri.file(workspacesFolder);
@@ -82,7 +82,7 @@ class WorkspaceTreeDataProvider
 			try {
 				files = await vscode.workspace.fs.readDirectory(uri);
 			} catch (error) {
-				popupError(`Unable to open ${uri.fsPath}`);
+				popupErrorUnableToOpen(uri);
 			}
 			if (!files || !files.length)
 				return resolve([]);
@@ -292,32 +292,14 @@ function configChanged(e) {
 		startOrStopFileSystemWatcher();
 }
 
-function popupInfo(msg)
+function popupErrorUnableToOpen(uri)
 {
-	vscode.window.showInformationMessage(popupToString(msg));
+	vscode.window.showErrorMessage(`Unable to open ${uri.fsPath}`);
 }
 
-function popupError(msg)
+function popupInfoSelectWorkspacesFolder()
 {
-	vscode.window.showErrorMessage(popupToString(msg));
-}
-
-function popupToString(msg)
-{
-	if (msg instanceof Set) {
-		const parts = [msg.toString()];
-		for (const value of msg)
-			parts.push(`	${value}`);
-		return parts.join('\n');
-	}
-
-	try {
-		return JSON.stringify(msg);
-	} catch (err) {
-		if (typeof msg === 'object')
-			return `Object of "Workspaces: Save Workspace As..." ${JSON.stringify(Object.keys(msg))}`;
-		return `Error: toString failed for ${typeof msg} (${err.name})\n$${err.message}`;
-	}
+	vscode.window.showInformationMessage('Run the command \'Select Workspaces Folder\'');
 }
 
 function refreshConfigCache(refreshIcons)
@@ -402,7 +384,7 @@ async function selectWorkspacesFolder()
 		canSelectFolders: true,
 		canSelectMany: false,
 		openLabel: 'Select',
-		title: 'Select folder of "Workspaces: Save Workspace As..." files',
+		title: 'Select folder where all .code-workspace files will be',
 	});
 
 	// Remember the workspaces folder, start/stop watcher, and refresh the tree
@@ -508,9 +490,9 @@ async function quickPickWorkspace(uri, startup)
 		// Stop if starting up and editing an existing file
 		if (startup && vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled)
 			return;
-		// Stop of "Workspaces: Save Workspace As..." if there is no workspaces folder
+		// Stop if there is no workspaces folder
 		if (!workspacesFolder)
-			return popupInfo('Run the command \'Select Workspaces Folder\'');
+			return popupInfoSelectWorkspacesFolder();
 		// Initialize the first uri
 		refreshConfigCache();
 		uri = vscode.Uri.file(workspacesFolder);
@@ -601,7 +583,7 @@ async function quickPickWorkspace(uri, startup)
 			}
 		}
 	} catch (error) {
-		popupError(`Unable to open ${uri.fsPath}`);
+		popupErrorUnableToOpen(uri);
 	}
 
 	// Show the items and remove the loading indicator
