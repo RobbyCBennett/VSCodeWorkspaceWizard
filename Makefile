@@ -1,5 +1,3 @@
-all:
+release:
+	rm -f *.vsix
 	vsce package
-
-clean:
-	rm *.vsix

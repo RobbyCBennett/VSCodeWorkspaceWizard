@@ -1,3 +1,6 @@
+'use strict';
+
+
 const vscode = require('vscode');
 
 
@@ -5,11 +8,20 @@ const vscode = require('vscode');
 // Constants
 //
 
-const ICON_CURRENT_WINDOW_OBJ = new vscode.ThemeIcon('window');
 const ICON_NEW_WINDOW_OBJ     = new vscode.ThemeIcon('empty-window');
+const ICON_CURRENT_WINDOW_OBJ = new vscode.ThemeIcon('window');
 
-const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
+const ICON_DEFAULT_FOLDER_OBJ    = new vscode.ThemeIcon('folder');
+const ICON_DEFAULT_WORKSPACE_OBJ = new vscode.ThemeIcon('folder-library');
+
 const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
+const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
+
+const QUICK_PICK_ITEM_ACTION_FOLDER    = false;
+const QUICK_PICK_ITEM_ACTION_WORKSPACE = true;
+
+const QUICK_SELECT_BUTTON_ACTION_NEW_FOLDER    = false;
+const QUICK_SELECT_BUTTON_ACTION_NEW_WORKSPACE = true;
 
 
 //
@@ -23,6 +35,8 @@ let expandedFolders;
 let iconSidebarFolderObj;
 let iconSidebarWorkspaceObj;
 let quickPick;
+let iconQuickPickFolderObj;
+let iconQuickPickWorkspaceObj;
 let treeDataProvider;
 let watcher;
 
@@ -57,15 +71,7 @@ class WorkspaceTreeDataProvider
 				}
 				uri = vscode.Uri.file(workspacesFolder);
 
-				// Create icons
-				if (config.sidebar.icon.folder)
-					iconSidebarFolderObj = new vscode.ThemeIcon(config.sidebar.icon.folder);
-				else
-					iconSidebarFolderObj = undefined;
-				if (config.sidebar.icon.workspace)
-					iconSidebarWorkspaceObj = new vscode.ThemeIcon(config.sidebar.icon.workspace);
-				else
-					iconSidebarWorkspaceObj = undefined;
+				createSidebarConfigurableIcons();
 			}
 			// Get path of a sub-folder
 			else
@@ -192,11 +198,11 @@ class FolderQuickPickItem
 	constructor(uri, name, icon)
 	{
 		// QuickPickItem
-		this.label = `${icon}${name}`;
+		this.label = `${iconIdToIconInLabel(icon)}${name}`;
 		this.description = 'Folder';
 
 		// Custom
-		this.isFolder = true;
+		this.action = QUICK_PICK_ITEM_ACTION_FOLDER;
 		this.uri = vscode.Uri.joinPath(uri, name);
 	}
 }
@@ -206,13 +212,41 @@ class WorkspaceFileQuickPickItem
 	constructor(uri, name, icon)
 	{
 		// QuickPickItem
-		this.label = `${icon}${simplifyWorkspace(name)}`;
+		this.label = `${iconIdToIconInLabel(icon)}${simplifyWorkspace(name)}`;
 		this.description = 'Workspace';
 		this.buttons = [new OpenQuickInputButton()];
 
 		// Custom
-		this.isFolder = false;
+		this.action = QUICK_PICK_ITEM_ACTION_WORKSPACE;
 		this.uri = vscode.Uri.joinPath(uri, name);
+	}
+}
+
+class NewFolderQuickInputButton
+{
+	constructor(uri)
+	{
+		// QuickInputButton
+		this.tooltip = 'New Folder';
+		this.iconPath = iconQuickPickFolderObj;
+
+		// Custom
+		this.action = QUICK_SELECT_BUTTON_ACTION_NEW_FOLDER;
+		this.uri = uri;
+	}
+}
+
+class NewWorkspaceFileQuickInputButton
+{
+	constructor(uri)
+	{
+		// QuickInputButton
+		this.tooltip = 'New Workspace';
+		this.iconPath = iconQuickPickWorkspaceObj;
+
+		// Custom
+		this.action = QUICK_SELECT_BUTTON_ACTION_NEW_WORKSPACE;
+		this.uri = uri;
 	}
 }
 
@@ -220,6 +254,35 @@ class WorkspaceFileQuickPickItem
 //
 // Helper Functions
 //
+
+function iconIdToIconInLabel(string)
+{
+	return string ? `$(${string}) ` : string;
+}
+
+function createQuickPickConfigurableIcons()
+{
+	if (config.quickPick.icon.folder)
+		iconQuickPickFolderObj = new vscode.ThemeIcon(config.quickPick.icon.folder);
+	else
+		iconQuickPickFolderObj = ICON_DEFAULT_FOLDER_OBJ;
+	if (config.quickPick.icon.workspace)
+		iconQuickPickWorkspaceObj = new vscode.ThemeIcon(config.quickPick.icon.workspace);
+	else
+		iconQuickPickWorkspaceObj = ICON_DEFAULT_WORKSPACE_OBJ;
+}
+
+function createSidebarConfigurableIcons()
+{
+	if (config.sidebar.icon.folder)
+		iconSidebarFolderObj = new vscode.ThemeIcon(config.sidebar.icon.folder);
+	else
+		iconSidebarFolderObj = undefined;
+	if (config.sidebar.icon.workspace)
+		iconSidebarWorkspaceObj = new vscode.ThemeIcon(config.sidebar.icon.workspace);
+	else
+		iconSidebarWorkspaceObj = undefined;
+}
 
 function configChanged(e) {
 	if (e.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
@@ -249,7 +312,7 @@ function popupToString(msg)
 		return JSON.stringify(msg);
 	} catch (err) {
 		if (typeof msg === 'object')
-			return `Object with keys: ${JSON.stringify(Object.keys(msg))}`;
+			return `Object of "Workspaces: Save Workspace As..." ${JSON.stringify(Object.keys(msg))}`;
 		return `Error: toString failed for ${typeof msg} (${err.name})\n$${err.message}`;
 	}
 }
@@ -336,7 +399,7 @@ async function selectWorkspacesFolder()
 		canSelectFolders: true,
 		canSelectMany: false,
 		openLabel: 'Select',
-		title: 'Select folder with .code-workspace files',
+		title: 'Select folder of "Workspaces: Save Workspace As..." files',
 	});
 
 	// Remember the workspaces folder, start/stop watcher, and refresh the tree
@@ -347,7 +410,7 @@ async function selectWorkspacesFolder()
 	}
 }
 
-function open(item)
+function openWorkspace(item)
 {
 	// Decide where to open
 	refreshConfigCache();
@@ -364,6 +427,70 @@ function open(item)
 		openWorkspaceInCurrentWindow(item);
 }
 
+async function newFolder(uri)
+{
+	// Make example URI
+	const name = 'NEW_FOLDER';
+	uri = vscode.Uri.joinPath(uri, name);
+
+	// Get select range
+	const selectStart = uri.fsPath.length - name.length;
+	const selectEnd = uri.fsPath.length;
+
+	// Get URI by user input
+	const path = await vscode.window.showInputBox({
+		placeHolder: uri.fsPath,
+		prompt: 'New folder to group workspaces',
+		title: 'New Folder',
+		value: uri.fsPath,
+		valueSelection: [selectStart, selectEnd],
+	});
+	uri = vscode.Uri.file(path);
+
+	// Create the folder
+	await vscode.workspace.fs.createDirectory(uri);
+}
+
+async function newWorkspace(uri)
+{
+	// Make sure workspaceFolders isn't undefined
+	const workspaceFolders = vscode.workspace.workspaceFolders || [];
+
+	// Make example URI
+	const name = (workspaceFolders.length) ? workspaceFolders[0].name : 'workspace';
+	const ext = '.code-workspace';
+	uri = vscode.Uri.joinPath(uri, `${name}${ext}`);
+
+	// Get select range
+	const selectStart = uri.fsPath.length - ext.length - name.length;
+	const selectEnd = uri.fsPath.length - ext.length;
+
+	// Get URI by user input
+	const path = await vscode.window.showInputBox({
+		placeHolder: uri.fsPath,
+		prompt: 'New workspace',
+		title: 'New Workspace',
+		value: uri.fsPath,
+		valueSelection: [selectStart, selectEnd],
+	});
+	uri = vscode.Uri.file(path);
+
+	// Create the content of the workspace file
+	const workspace = { folders: [] };
+	for (const workspaceFolder of workspaceFolders)
+		workspace.folders.push({ path: workspaceFolder.uri.fsPath });
+
+	// Create the workspace file
+	const workspaceEdit = new vscode.WorkspaceEdit();
+	workspaceEdit.createFile(uri, {
+		contents: Buffer.from(JSON.stringify(workspace, null, '\t')),
+	});
+	const created = await vscode.workspace.applyEdit(workspaceEdit);
+
+	// Open the newly created workspace
+	vscode.commands.executeCommand('vscode.openFolder', uri, {forceNewWindow: false});
+}
+
 async function quickPickWorkspace(uri, startup)
 {
 	// Get path of the workspaces folder
@@ -374,7 +501,7 @@ async function quickPickWorkspace(uri, startup)
 		// Stop if starting up and editing an existing file
 		if (startup && vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled)
 			return;
-		// Stop with a message if there is no workspaces folder
+		// Stop of "Workspaces: Save Workspace As..." if there is no workspaces folder
 		if (!workspacesFolder)
 			return popupInfo('Run the command \'Select Workspaces Folder\'');
 		// Initialize the first uri
@@ -382,17 +509,23 @@ async function quickPickWorkspace(uri, startup)
 		uri = vscode.Uri.file(workspacesFolder);
 	}
 
-	// Initialize
+	// Initialize quick pick
 	if (!quickPick) {
 		quickPick = vscode.window.createQuickPick();
-		quickPick.buttons = [];
 		quickPick.title = 'Workspaces';
+		quickPick.buttons = [];
 		quickPick.onDidChangeSelection(function(quickPickItems) {
+			if (quickPickItems.length === 0)
+				return;
 			const quickPickItem = quickPickItems[0];
-			if (quickPickItem.isFolder)
-				quickPickWorkspace(quickPickItem.uri, false);
-			else
-				open(quickPickItem);
+			switch (quickPickItem.action) {
+				case QUICK_PICK_ITEM_ACTION_FOLDER:
+					quickPickWorkspace(quickPickItem.uri, false);
+					break;
+				case QUICK_PICK_ITEM_ACTION_WORKSPACE:
+					openWorkspace(quickPickItem);
+					break;
+			}
 		});
 		quickPick.onDidHide(function() {
 			quickPick.dispose();
@@ -404,27 +537,46 @@ async function quickPickWorkspace(uri, startup)
 			else
 				openWorkspaceInNewWindow(e.item);
 		});
-	}
-	quickPick.busy = true;
-	quickPick.items = [];
-	quickPick.show();
-
-	// Icons
-	const folderIcon = config.quickPick.icon.folder
-		? `$(${config.quickPick.icon.folder}) `
-		: '';
-	const workspaceIcon = config.quickPick.icon.workspace
-		? `$(${config.quickPick.icon.workspace}) `
-		: '';
-
-	// Add .. as the first quick pick item, if it's not the workspaces folder
-	if (uri.fsPath !== workspacesFolder) {
-		quickPick.items.push(new FolderQuickPickItem(uri, '..', folderIcon));
-		quickPick.buttons = [vscode.QuickInputButtons.Back];
-		quickPick.onDidTriggerButton(function() {
-			quickPickWorkspace(quickPick.items[0].uri, false);
+		quickPick.onDidTriggerButton(async function(button) {
+			switch (button.action) {
+				case QUICK_SELECT_BUTTON_ACTION_NEW_FOLDER:
+					await newFolder(button.uri);
+					quickPickWorkspace(button.uri, false);
+					break;
+				case QUICK_SELECT_BUTTON_ACTION_NEW_WORKSPACE:
+					newWorkspace(button.uri);
+					break;
+				case undefined: // Back
+					quickPickWorkspace(quickPick.items[0].uri, false);
+					break;
+			}
 		});
 	}
+
+	// Clear the items
+	quickPick.items = [];
+
+	// Get the icons
+	const folderIcon = config.quickPick.icon.folder;
+	const workspaceIcon = config.quickPick.icon.workspace;
+	createQuickPickConfigurableIcons();
+
+	// Add new folder and new workspace buttons
+	quickPick.buttons = [
+		new NewFolderQuickInputButton(uri),
+		new NewWorkspaceFileQuickInputButton(uri),
+	];
+
+	// If in a sub-folder, add back button and .. button
+	if (uri.fsPath !== workspacesFolder) {
+		quickPick.buttons.push(vscode.QuickInputButtons.Back);
+		quickPick.buttons = quickPick.buttons;
+		quickPick.items.push(new FolderQuickPickItem(uri, '..', folderIcon));
+	}
+
+	// Show as empty with the loading indicator
+	quickPick.busy = true;
+	quickPick.show();
 
 	// Add other children of the folder as quick pick items
 	try {
@@ -474,8 +626,8 @@ function activate(_context)
 
 		// Commands
 		vscode.commands.registerCommand(
-			'workspaceWizard._open',
-			open
+			'workspaceWizard._openWorkspace',
+			openWorkspace
 		),
 		vscode.commands.registerCommand(
 			'workspaceWizard._openWorkspaceInCurrentWindow',
