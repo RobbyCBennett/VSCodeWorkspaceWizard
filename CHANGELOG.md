@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.0.4] - 2023 Oct 25
+- Fix: Clear QuickPick filter text value when navigating
+
 ## [1.0.3] - 2023 Sep 15
 - Add: Ability to create new folders/workspaces in QuickPick
 - Fix: Ability to open workspaces in sidebar

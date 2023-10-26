@@ -542,7 +542,8 @@ async function quickPickWorkspace(uri, startup)
 		});
 	}
 
-	// Clear the items
+	// Clear the filter text value and the folder/workspace items
+	quickPick.value = '';
 	quickPick.items = [];
 
 	// Get the icons
