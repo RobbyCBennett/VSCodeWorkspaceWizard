@@ -23,6 +23,8 @@ const QUICK_PICK_ITEM_ACTION_WORKSPACE = true;
 const QUICK_SELECT_BUTTON_ACTION_NEW_FOLDER    = false;
 const QUICK_SELECT_BUTTON_ACTION_NEW_WORKSPACE = true;
 
+const RE_WORKSPACE = /\.code-workspace$/;
+
 
 //
 // Temporary Data
@@ -77,24 +79,13 @@ class WorkspaceTreeDataProvider
 			else
 				uri = treeItem.uri;
 
-			// Get children of the path
-			let files;
-			try {
-				files = await vscode.workspace.fs.readDirectory(uri);
-			} catch (error) {
-				popupErrorUnableToOpen(uri);
-			}
-			if (!files || !files.length)
-				return resolve([]);
-
 			// Create tree items for files
 			const treeItems = [];
-			for (const [name, fileType] of files) {
+			for (const [name, fileType] of await readDirectory(uri)) {
 				// File
 				if (fileType & vscode.FileType.File) {
-					if (/\.code-workspace$/.test(name)) {
+					if (RE_WORKSPACE.test(name))
 						treeItems.push(new WorkspaceFileTreeItem(uri, name));
-					}
 				}
 				// Folder
 				else {
@@ -126,14 +117,10 @@ class FolderTreeItem extends vscode.TreeItem
 
 		// Collapsed
 		let collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-		if (config.sidebar.expandFolders === 'All Folders') {
+		if (config.sidebar.expandFolders === 'All Folders')
 			collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-		}
-		else if (config.sidebar.expandFolders === 'Expanded Last Time') {
-			if (expandedFolders.has(uri.fsPath)) {
-				collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-			}
-		}
+		else if (config.sidebar.expandFolders === 'Expanded Last Time' && expandedFolders.has(uri.fsPath))
+			collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
 
 		// TreeItem
 		super(
@@ -257,6 +244,30 @@ class NewWorkspaceFileQuickInputButton
 //
 // Helper Functions
 //
+
+async function readDirectory(uri)
+{
+	let files;
+	try {
+		files = await vscode.workspace.fs.readDirectory(uri);
+	} catch (error) {
+		popupErrorUnableToOpen(uri);
+		return [];
+	}
+
+	files.sort(function(fileA, fileB) {
+		const a = fileA[0].replace(RE_WORKSPACE, '');
+		const b = fileB[0].replace(RE_WORKSPACE, '');
+		if (a > b)
+			return 1;
+		else if (a < b)
+			return -1;
+		else
+			return 0;
+	});
+
+	return files;
+}
 
 function iconIdToIconInLabel(string)
 {
@@ -569,22 +580,16 @@ async function quickPickWorkspace(uri, startup)
 	quickPick.show();
 
 	// Add other children of the folder as quick pick items
-	try {
-		const additionalFiles = await vscode.workspace.fs.readDirectory(uri);
-		for (const [name, fileType] of additionalFiles) {
-			// File
-			if (fileType & vscode.FileType.File) {
-				if (/\.code-workspace$/.test(name)) {
-					quickPick.items.push(new WorkspaceFileQuickPickItem(uri, name, workspaceIcon));
-				}
-			}
-			// Folder
-			else {
-				quickPick.items.push(new FolderQuickPickItem(uri, name, folderIcon));
-			}
+	for (const [name, fileType] of await readDirectory(uri)) {
+		// File
+		if (fileType & vscode.FileType.File) {
+			if (RE_WORKSPACE.test(name))
+				quickPick.items.push(new WorkspaceFileQuickPickItem(uri, name, workspaceIcon));
 		}
-	} catch (error) {
-		popupErrorUnableToOpen(uri);
+		// Folder
+		else {
+			quickPick.items.push(new FolderQuickPickItem(uri, name, folderIcon));
+		}
 	}
 
 	// Show the items and remove the loading indicator

@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.0.5] - 2024 Feb 6
+- Fix: Improve sorting
+
 ## [1.0.4] - 2023 Oct 25
 - Fix: Clear QuickPick filter text value when navigating
 
