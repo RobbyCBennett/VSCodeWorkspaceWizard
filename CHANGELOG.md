@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.0.6] - 2024 May 7
+- Fix: Improve settings and add support for remote hosts like SSH
+
 ## [1.0.5] - 2024 Feb 6
 - Fix: Improve sorting
 

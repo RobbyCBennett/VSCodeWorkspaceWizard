@@ -14,9 +14,6 @@ const ICON_CURRENT_WINDOW_OBJ = new vscode.ThemeIcon('window');
 const ICON_DEFAULT_FOLDER_OBJ    = new vscode.ThemeIcon('folder');
 const ICON_DEFAULT_WORKSPACE_OBJ = new vscode.ThemeIcon('folder-library');
 
-const KEY_EXPANDED_FOLDERS  = 'expandedFolders';
-const KEY_WORKSPACES_FOLDER = 'workspacesFolder';
-
 const QUICK_PICK_ITEM_ACTION_FOLDER    = false;
 const QUICK_PICK_ITEM_ACTION_WORKSPACE = true;
 
@@ -31,13 +28,13 @@ const RE_WORKSPACE = /\.code-workspace$/;
 //
 
 
-let config;
 let context;
-let expandedFolders;
+
 let iconQuickPickFolderObj;
 let iconQuickPickWorkspaceObj;
 let iconSidebarFolderObj;
 let iconSidebarWorkspaceObj;
+
 let quickPick;
 let treeDataProvider;
 let watcher;
@@ -66,7 +63,7 @@ class WorkspaceTreeDataProvider
 			let uri;
 			// Get path of the workspaces folder
 			if (!treeItem) {
-				const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
+				const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolder')
 				if (!workspacesFolder) {
 					popupInfoSelectWorkspacesFolder();
 					return resolve([]);
@@ -104,7 +101,6 @@ class WorkspaceTreeDataProvider
 
 	refresh()
 	{
-		refreshConfigCache();
 		this._onDidChangeTreeData.fire();
 	}
 }
@@ -116,11 +112,9 @@ class FolderTreeItem extends vscode.TreeItem
 		uri = vscode.Uri.joinPath(uri, name);
 
 		// Collapsed
-		let collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-		if (config.sidebar.expandFolders === 'All Folders')
-			collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-		else if (config.sidebar.expandFolders === 'Expanded Last Time' && expandedFolders.has(uri.fsPath))
-			collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+		const collapsibleState = vscode.workspace.getConfiguration().get('workspaceWizard.sidebar.expandFolders')
+			? vscode.TreeItemCollapsibleState.Expanded
+			: vscode.TreeItemCollapsibleState.Collapsed;
 
 		// TreeItem
 		super(
@@ -172,7 +166,7 @@ class OpenQuickInputButton
 {
 	constructor()
 	{
-		if (config.quickPick.openInNewWindow) {
+		if (vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.openInNewWindow')) {
 			this.iconPath = ICON_CURRENT_WINDOW_OBJ;
 			this.tooltip = 'Open Workspace in Current Window';
 		}
@@ -276,26 +270,20 @@ function iconIdToIconInLabel(string)
 
 function createQuickPickConfigurableIcons()
 {
-	if (config.quickPick.icon.folder)
-		iconQuickPickFolderObj = new vscode.ThemeIcon(config.quickPick.icon.folder);
-	else
-		iconQuickPickFolderObj = ICON_DEFAULT_FOLDER_OBJ;
-	if (config.quickPick.icon.workspace)
-		iconQuickPickWorkspaceObj = new vscode.ThemeIcon(config.quickPick.icon.workspace);
-	else
-		iconQuickPickWorkspaceObj = ICON_DEFAULT_WORKSPACE_OBJ;
+	let icon = vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.icon.folder');
+	iconQuickPickFolderObj = icon ? new vscode.ThemeIcon(icon) : ICON_DEFAULT_FOLDER_OBJ;
+
+	icon = vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.icon.workspace');
+	iconQuickPickWorkspaceObj = icon ? new vscode.ThemeIcon(icon) : ICON_DEFAULT_WORKSPACE_OBJ;
 }
 
 function createSidebarConfigurableIcons()
 {
-	if (config.sidebar.icon.folder)
-		iconSidebarFolderObj = new vscode.ThemeIcon(config.sidebar.icon.folder);
-	else
-		iconSidebarFolderObj = undefined;
-	if (config.sidebar.icon.workspace)
-		iconSidebarWorkspaceObj = new vscode.ThemeIcon(config.sidebar.icon.workspace);
-	else
-		iconSidebarWorkspaceObj = undefined;
+	let icon = vscode.workspace.getConfiguration().get('workspaceWizard.sidebar.icon.folder');
+	iconSidebarFolderObj = icon ? new vscode.ThemeIcon(icon) : undefined;
+
+	icon = vscode.workspace.getConfiguration().get('workspaceWizard.sidebar.icon.workspace');
+	iconSidebarWorkspaceObj = icon ? new vscode.ThemeIcon(icon) : undefined;
 }
 
 function configChanged(e) {
@@ -310,20 +298,11 @@ function popupErrorUnableToOpen(uri)
 
 function popupInfoSelectWorkspacesFolder()
 {
-	vscode.window.showInformationMessage('Run the command \'Select Workspaces Folder\'');
-}
-
-function refreshConfigCache(refreshIcons)
-{
-	config = vscode.workspace.getConfiguration().get('workspaceWizard');
-}
-
-function saveExpandedFolders()
-{
-	const values = [];
-	for (const value of expandedFolders)
-		values.push(value);
-	context.globalState.update(KEY_EXPANDED_FOLDERS, values);
+	const buttonText = 'Configure';
+	vscode.window.showInformationMessage('Select workspaces folder', buttonText).then(function(selection) {
+		if (selection === buttonText)
+			selectWorkspacesFolder();
+	});
 }
 
 function simplifyWorkspace(name)
@@ -334,14 +313,13 @@ function simplifyWorkspace(name)
 function startOrStopFileSystemWatcher()
 {
 	// If the user wants to watch for changes
-	refreshConfigCache();
-	if (config.sidebar.watchForChanges) {
+	if (vscode.workspace.getConfiguration().get('workspaceWizard.sidebar.watchForChanges')) {
 		// Skip if it's already been started
 		if (watcher !== undefined)
 			return;
 
 		// Skip if there is no workspace folder
-		const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
+		const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolders');
 		if (!workspacesFolder)
 			return;
 
@@ -387,34 +365,19 @@ function openWorkspaceInNewWindow(item)
 // Extension Commands in Command Palette
 //
 
-async function selectWorkspacesFolder()
+function selectWorkspacesFolder()
 {
-	// Get the workspaces folder from user input
-	const uris = await vscode.window.showOpenDialog({
-		canSelectFiles: false,
-		canSelectFolders: true,
-		canSelectMany: false,
-		openLabel: 'Select',
-		title: 'Select folder where all .code-workspace files will be',
-	});
-
-	// Remember the workspaces folder, start/stop watcher, and refresh the tree
-	if (uris && uris.length) {
-		await context.globalState.update(KEY_WORKSPACES_FOLDER, uris[0].fsPath);
-		startOrStopFileSystemWatcher();
-		refreshWorkspacesSidebar();
-	}
+	vscode.commands.executeCommand('workbench.action.openSettings', 'workspaceWizard.general.workspacesFolder');
 }
 
 function openWorkspace(item)
 {
 	// Decide between new window and current window
-	refreshConfigCache();
 	let openInNewWindow;
 	if (item.isWorkspaceFileTreeItem === true)
-		openInNewWindow = config.sidebar.openInNewWindow;
+		openInNewWindow = vscode.workspace.getConfiguration().get('workspaceWizard.sidebar.openInNewWindow');
 	else if (item)
-		openInNewWindow = config.quickPick.openInNewWindow;
+		openInNewWindow = vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.openInNewWindow');
 
 	// Open
 	if (openInNewWindow)
@@ -494,7 +457,7 @@ async function quickPickWorkspace(uri, startup)
 		return;
 
 	// Get path of the workspaces folder
-	const workspacesFolder = context.globalState.get(KEY_WORKSPACES_FOLDER);
+	const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolder')
 
 	// If there is no current workspace/folder
 	if (!uri) {
@@ -505,7 +468,6 @@ async function quickPickWorkspace(uri, startup)
 		if (!workspacesFolder)
 			return popupInfoSelectWorkspacesFolder();
 		// Initialize the first uri
-		refreshConfigCache();
 		uri = vscode.Uri.file(workspacesFolder);
 	}
 
@@ -532,7 +494,7 @@ async function quickPickWorkspace(uri, startup)
 			quickPick = undefined;
 		});
 		quickPick.onDidTriggerItemButton(function(e) {
-			if (config.quickPick.openInNewWindow)
+			if (vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.openInNewWindow'))
 				openWorkspaceInCurrentWindow(e.item);
 			else
 				openWorkspaceInNewWindow(e.item);
@@ -558,8 +520,8 @@ async function quickPickWorkspace(uri, startup)
 	quickPick.items = [];
 
 	// Get the icons
-	const folderIcon = config.quickPick.icon.folder;
-	const workspaceIcon = config.quickPick.icon.workspace;
+	const folderIcon = vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.icon.folder');
+	const workspaceIcon = vscode.workspace.getConfiguration().get('workspaceWizard.sidebar.icon.workspace')
 	createQuickPickConfigurableIcons();
 
 	// Add new folder and new workspace buttons
@@ -612,7 +574,6 @@ function activate(_context)
 	// Temporary data
 	context = _context;
 	treeDataProvider = new WorkspaceTreeDataProvider();
-	refreshConfigCache();
 
 	// Register
 	context.subscriptions.push(
@@ -655,35 +616,20 @@ function activate(_context)
 	);
 
 	// Tree view
-	const treeView = vscode.window.createTreeView(
+	vscode.window.createTreeView(
 		'workspaceWizard',
 		{ treeDataProvider: treeDataProvider }
 	);
 
 	// Open the workspaces on startup
 	const isExisting = vscode.workspace.name ? true : false;
-	const startAction = isExisting ? config.general.startOnExistingWindow : config.general.startOnNewWindow;
+	const startAction = isExisting
+		? vscode.workspace.getConfiguration().get('workspaceWizard.general.startOnExistingWindow')
+		: vscode.workspace.getConfiguration().get('workspaceWizard.general.startOnNewWindow');
 	if (startAction === 'QuickPick')
 		quickPickWorkspace(null, true);
 	else if (startAction === 'Sidebar')
 		vscode.commands.executeCommand('workbench.view.extension.workspaceWizard');
-
-	// Get tree view collapse/expand status from storage
-	expandedFolders = new Set(context.globalState.get(KEY_EXPANDED_FOLDERS) || []);
-
-	// Save tree view collapse/expand changes to storage
-	treeView.onDidCollapseElement(function(e) {
-		if (expandedFolders.has(e.element.uri.fsPath)) {
-			expandedFolders.delete(e.element.uri.fsPath);
-			saveExpandedFolders();
-		}
-	});
-	treeView.onDidExpandElement(function(e) {
-		if (!expandedFolders.has(e.element.uri.fsPath)) {
-			expandedFolders.add(e.element.uri.fsPath);
-			saveExpandedFolders();
-		}
-	});
 
 	// Watch file system for changes to the workspaces folder
 	startOrStopFileSystemWatcher();

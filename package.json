@@ -2,7 +2,7 @@
 	"name": "workspaceWizard",
 	"displayName": "Workspace Wizard",
 	"description": "Easily organize & switch workspaces",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"publisher": "rob-bennett",
 	"repository": {
 		"type": "git",
@@ -53,10 +53,6 @@
 				"icon": "$(refresh)"
 			},
 			{
-				"command": "workspaceWizard.selectWorkspacesFolder",
-				"title": "Workspace Wizard: Select Workspaces Folder"
-			},
-			{
 				"command": "workspaceWizard._selectWorkspacesFolder",
 				"title": "Select Workspaces Folder"
 			}
@@ -76,6 +72,12 @@
 					"enum": ["None", "QuickPick", "Sidebar"],
 					"description": "Start with workspaces when a new/blank window is opened"
 				},
+				"workspaceWizard.general.workspacesFolder": {
+					"type": "string",
+					"default": "",
+					"description": "Folder that has .code-workspace files",
+					"scope": "machine-overridable"
+				},
 
 				"workspaceWizard.quickPick.icon.folder": {
 					"type": "string",
@@ -94,9 +96,8 @@
 				},
 
 				"workspaceWizard.sidebar.expandFolders": {
-					"type": "string",
-					"default": "Expanded Last Time",
-					"enum": ["All Folders", "Expanded Last Time", "None"],
+					"type": "boolean",
+					"default": false,
 					"description": "Automatically expand folders in the sidebar"
 				},
 				"workspaceWizard.sidebar.icon.folder": {
