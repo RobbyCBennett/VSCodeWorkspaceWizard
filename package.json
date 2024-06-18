@@ -2,7 +2,7 @@
 	"name": "workspaceWizard",
 	"displayName": "Workspace Wizard",
 	"description": "Easily organize & switch workspaces",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"publisher": "rob-bennett",
 	"repository": {
 		"type": "git",
@@ -30,30 +30,36 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "workspaceWizard._openWorkspaceInCurrentWindow",
+				"category": "Workspace Wizard",
+				"command": "workspaceWizard.editWorkspacesFolder",
+				"title": "Edit Workspaces Folder"
+			},
+			{
+				"category": "Workspace Wizard",
+				"command": "workspaceWizard.openWorkspaceInCurrentWindow",
 				"title": "Open Workspace in Current Window",
 				"icon": "$(window)"
 			},
 			{
-				"command": "workspaceWizard._openWorkspaceInNewWindow",
+				"category": "Workspace Wizard",
+				"command": "workspaceWizard.openWorkspaceInNewWindow",
 				"title": "Open Workspace in New Window",
 				"icon": "$(empty-window)"
 			},
 			{
+				"category": "Workspace Wizard",
 				"command": "workspaceWizard.quickPickWorkspace",
-				"title": "Workspace Wizard: Quick Pick Workspace"
+				"title": "Quick Pick Workspace"
 			},
 			{
+				"category": "Workspace Wizard",
 				"command": "workspaceWizard.refreshWorkspacesSidebar",
-				"title": "Workspace Wizard: Refresh Workspaces Sidebar"
-			},
-			{
-				"command": "workspaceWizard._refreshWorkspacesSidebar",
-				"title": "Refresh",
+				"title": "Refresh Workspaces Sidebar",
 				"icon": "$(refresh)"
 			},
 			{
-				"command": "workspaceWizard._selectWorkspacesFolder",
+				"category": "Workspace Wizard",
+				"command": "workspaceWizard.selectWorkspacesFolder",
 				"title": "Select Workspaces Folder"
 			}
 		],
@@ -125,38 +131,34 @@
 		"menus": {
 			"commandPalette": [
 				{
-					"command": "workspaceWizard._openWorkspaceInCurrentWindow",
+					"command": "workspaceWizard.openWorkspaceInCurrentWindow",
 					"when": "false"
 				},
 				{
-					"command": "workspaceWizard._openWorkspaceInNewWindow",
-					"when": "false"
-				},
-				{
-					"command": "workspaceWizard._selectWorkspacesFolder",
+					"command": "workspaceWizard.openWorkspaceInNewWindow",
 					"when": "false"
 				}
 			],
 			"view/item/context": [
 				{
-					"command": "workspaceWizard._openWorkspaceInCurrentWindow",
+					"command": "workspaceWizard.openWorkspaceInCurrentWindow",
 					"when": "view == workspaceWizard && viewItem == workspace && config.workspaceWizard.sidebar.openInNewWindow",
 					"group": "inline"
 				},
 				{
-					"command": "workspaceWizard._openWorkspaceInNewWindow",
+					"command": "workspaceWizard.openWorkspaceInNewWindow",
 					"when": "view == workspaceWizard && viewItem == workspace && !config.workspaceWizard.sidebar.openInNewWindow",
 					"group": "inline"
 				}
 			],
 			"view/title": [
 				{
-					"command": "workspaceWizard._refreshWorkspacesSidebar",
+					"command": "workspaceWizard.refreshWorkspacesSidebar",
 					"when": "view == workspaceWizard",
 					"group": "navigation"
 				},
 				{
-					"command": "workspaceWizard._selectWorkspacesFolder",
+					"command": "workspaceWizard.selectWorkspacesFolder",
 					"when": "view == workspaceWizard"
 				}
 			]

@@ -63,7 +63,7 @@ class WorkspaceTreeDataProvider
 			let uri;
 			// Get path of the workspaces folder
 			if (!treeItem) {
-				const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolder')
+				const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolder');
 				if (!workspacesFolder) {
 					popupInfoSelectWorkspacesFolder();
 					return resolve([]);
@@ -293,7 +293,11 @@ function configChanged(e) {
 
 function popupErrorUnableToOpen(uri)
 {
-	vscode.window.showErrorMessage(`Unable to open ${uri.fsPath}`);
+	const buttonText = 'Configure';
+	vscode.window.showErrorMessage(`Unable to open ${uri.fsPath}`, buttonText).then(function(selection) {
+		if (selection === buttonText)
+			selectWorkspacesFolder();
+	});
 }
 
 function popupInfoSelectWorkspacesFolder()
@@ -364,6 +368,16 @@ function openWorkspaceInNewWindow(item)
 //
 // Extension Commands in Command Palette
 //
+
+function editWorkspacesFolder()
+{
+	const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolder');
+	if (!workspacesFolder)
+		return popupInfoSelectWorkspacesFolder();
+
+	const uri = vscode.Uri.file(workspacesFolder);
+	vscode.commands.executeCommand('vscode.openFolder', uri);
+}
 
 function selectWorkspacesFolder()
 {
@@ -457,7 +471,7 @@ async function quickPickWorkspace(uri, startup)
 		return;
 
 	// Get path of the workspaces folder
-	const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolder')
+	const workspacesFolder = vscode.workspace.getConfiguration().get('workspaceWizard.general.workspacesFolder');
 
 	// If there is no current workspace/folder
 	if (!uri) {
@@ -581,38 +595,13 @@ function activate(_context)
 		vscode.window.registerTreeDataProvider('workspaceWizard', treeDataProvider),
 
 		// Commands
-		vscode.commands.registerCommand(
-			'workspaceWizard._openWorkspace',
-			openWorkspace
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard._openWorkspaceInCurrentWindow',
-			openWorkspaceInCurrentWindow
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard._openWorkspaceInNewWindow',
-			openWorkspaceInNewWindow
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard.quickPickWorkspace',
-			quickPickWorkspace
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard.refreshWorkspacesSidebar',
-			refreshWorkspacesSidebar
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard._refreshWorkspacesSidebar',
-			refreshWorkspacesSidebar
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard.selectWorkspacesFolder',
-			selectWorkspacesFolder
-		),
-		vscode.commands.registerCommand(
-			'workspaceWizard._selectWorkspacesFolder',
-			selectWorkspacesFolder
-		),
+		vscode.commands.registerCommand('workspaceWizard.editWorkspacesFolder', editWorkspacesFolder),
+		vscode.commands.registerCommand('workspaceWizard.openWorkspace', openWorkspace),
+		vscode.commands.registerCommand('workspaceWizard.openWorkspaceInCurrentWindow', openWorkspaceInCurrentWindow),
+		vscode.commands.registerCommand('workspaceWizard.openWorkspaceInNewWindow', openWorkspaceInNewWindow),
+		vscode.commands.registerCommand('workspaceWizard.quickPickWorkspace', quickPickWorkspace),
+		vscode.commands.registerCommand('workspaceWizard.refreshWorkspacesSidebar', refreshWorkspacesSidebar),
+		vscode.commands.registerCommand('workspaceWizard.selectWorkspacesFolder', selectWorkspacesFolder),
 	);
 
 	// Tree view

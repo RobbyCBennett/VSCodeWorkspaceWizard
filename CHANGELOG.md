@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.7] - 2024 Jun 17
+- Add: Ability to edit the workspace files in the workspaces folder
+- Fix: Improve error popup
+
 ## [1.0.6] - 2024 May 7
 - Fix: Improve settings and add support for remote hosts like SSH
 
