@@ -2,7 +2,7 @@
 	"name": "workspaceWizard",
 	"displayName": "Workspace Wizard",
 	"description": "Easily organize & switch workspaces",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"publisher": "rob-bennett",
 	"repository": {
 		"type": "git",
@@ -27,6 +27,9 @@
 	],
 	"icon": "icon.png",
 	"main": "./extension.js",
+	"devDependencies": {
+		"@vscode/vsce": "3.1.0"
+	},
 	"contributes": {
 		"commands": [
 			{

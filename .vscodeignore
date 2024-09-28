@@ -1,5 +1,7 @@
-.vscode
 .gitignore
+.vscode
 *.vsix
 icon.svg
 Makefile
+node_modules
+package-lock.json

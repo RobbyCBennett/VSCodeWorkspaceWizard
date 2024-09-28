@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.0.8] - 2024 Sep 28
+- Fix: Remove back button from root if workspaces folder path has forward slashes on Windows
+
 ## [1.0.7] - 2024 Jun 17
 - Add: Ability to edit the workspace files in the workspaces folder
 - Fix: Improve error popup
