@@ -69,17 +69,23 @@
 		"configuration": {
 			"title": "Workspace Wizard",
 			"properties": {
+				"workspaceWizard.general.sortOrder": {
+					"type": "string",
+					"default": "Folders First",
+					"enum": ["Mixed", "Folders First", "Workspaces First"],
+					"description": "Where to group folders and workspaces when sorting"
+				},
 				"workspaceWizard.general.startOnExistingWindow": {
 					"type": "string",
 					"default": "None",
 					"enum": ["None", "QuickPick", "Sidebar"],
-					"description": "Start with workspaces when an existing/used window is opened"
+					"description": "Start with workspaces when a non-blank window is opened"
 				},
 				"workspaceWizard.general.startOnNewWindow": {
 					"type": "string",
 					"default": "Sidebar",
 					"enum": ["None", "QuickPick", "Sidebar"],
-					"description": "Start with workspaces when a new/blank window is opened"
+					"description": "Start with workspaces when a blank window is opened"
 				},
 				"workspaceWizard.general.workspacesFolder": {
 					"type": "string",

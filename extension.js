@@ -250,6 +250,10 @@ class NewWorkspaceFileQuickInputButton
 
 async function readDirectory(uri)
 {
+	const sortOrder = vscode.workspace.getConfiguration().get('workspaceWizard.general.sortOrder');
+	const foldersFirst = sortOrder === 'Folders First';
+	const workspacesFirst = sortOrder === 'Workspaces First';
+
 	let files;
 	try {
 		files = await vscode.workspace.fs.readDirectory(uri);
@@ -258,12 +262,22 @@ async function readDirectory(uri)
 		return [];
 	}
 
-	files.sort(function(fileA, fileB) {
-		const a = fileA[0].replace(RE_WORKSPACE, '');
-		const b = fileB[0].replace(RE_WORKSPACE, '');
-		if (a > b)
+	files.sort(function(a, b) {
+		if (foldersFirst) {
+			if (a[1] === vscode.FileType.File && b[1] === vscode.FileType.Directory)
+				return 1;
+			else if (a[1] === vscode.FileType.Directory && b[1] === vscode.FileType.File)
+				return -1;
+		}
+		else if (workspacesFirst) {
+			if (a[1] === vscode.FileType.Directory && b[1] === vscode.FileType.File)
+				return 1;
+			else if (a[1] === vscode.FileType.File && b[1] === vscode.FileType.Directory)
+				return -1;
+		}
+		if (a[0] > b[0])
 			return 1;
-		else if (a < b)
+		else if (a[0] < b[0])
 			return -1;
 		else
 			return 0;
@@ -314,6 +328,8 @@ function createSidebarConfigurableIcons()
 function configChanged(e) {
 	if (e.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
 		startOrStopFileSystemWatcher();
+	else if (e.affectsConfiguration('workspaceWizard.general.sortOrder'))
+		refreshWorkspacesSidebar();
 }
 
 
@@ -575,7 +591,7 @@ async function quickPickWorkspace(uri, startup)
 
 	// Get the icons
 	const folderIcon = vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.icon.folder');
-	const workspaceIcon = vscode.workspace.getConfiguration().get('workspaceWizard.sidebar.icon.workspace')
+	const workspaceIcon = vscode.workspace.getConfiguration().get('workspaceWizard.quickPick.icon.workspace')
 	createQuickPickConfigurableIcons();
 
 	// Add new folder and new workspace buttons
