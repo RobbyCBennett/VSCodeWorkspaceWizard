@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.9] - 2024 Oct 16
+- Add: Add sort order setting to move the folders before or after the workspaces
+- Fix: Restore hidden icons on workspaces in QuickPick
+
 ## [1.0.8] - 2024 Sep 28
 - Fix: Remove back button from root if workspaces folder path has forward slashes on Windows
 

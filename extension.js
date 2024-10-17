@@ -24,19 +24,29 @@ const RE_WORKSPACE = /\.code-workspace$/;
 
 
 //
-// Temporary Data
+// Global Variables
 //
 
 
-let context;
-
+/** @type vscode.ThemeIcon | undefined */
 let iconQuickPickFolderObj;
+
+/** @type vscode.ThemeIcon | undefined */
 let iconQuickPickWorkspaceObj;
+
+/** @type vscode.ThemeIcon | undefined */
 let iconSidebarFolderObj;
+
+/** @type vscode.ThemeIcon | undefined */
 let iconSidebarWorkspaceObj;
 
+/** @type vscode.QuickPick<vscode.QuickPickItem | FolderQuickPickItem | WorkspaceFileQuickPickItem> | undefined */
 let quickPick;
+
+/** @type WorkspaceTreeDataProvider | undefined */
 let treeDataProvider;
+
+/** @type vscode.FileSystemWatcher | undefined */
 let watcher;
 
 
@@ -56,9 +66,12 @@ class WorkspaceTreeDataProvider
 		this.onDidChangeTreeData = this._onDidChangeTreeData.event;
 	}
 
+	/**
+	 * @param {FolderTreeItem | WorkspaceFileTreeItem | undefined} treeItem
+	 */
 	async getChildren(treeItem)
 	{
-		return new Promise(async (resolve, reject) =>
+		return new Promise(async (resolve, _reject) =>
 		{
 			// Get path
 			let uri;
@@ -95,6 +108,9 @@ class WorkspaceTreeDataProvider
 		});
 	}
 
+	/**
+	 * @param {FolderTreeItem | WorkspaceFileTreeItem | undefined} treeItem
+	 */
 	getTreeItem(treeItem)
 	{
 		return treeItem;
@@ -102,13 +118,17 @@ class WorkspaceTreeDataProvider
 
 	refresh()
 	{
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 	}
 }
 
 
 class FolderTreeItem extends vscode.TreeItem
 {
+	/**
+	 * @param {vscode.Uri} uri
+	 * @param {string} name
+	 */
 	constructor(uri, name)
 	{
 		uri = vscode.Uri.joinPath(uri, name);
@@ -134,6 +154,10 @@ class FolderTreeItem extends vscode.TreeItem
 
 class WorkspaceFileTreeItem extends vscode.TreeItem
 {
+	/**
+	 * @param {vscode.Uri} uri
+	 * @param {string} name
+	 */
 	constructor(uri, name)
 	{
 		uri = vscode.Uri.joinPath(uri, name);
@@ -184,6 +208,11 @@ class OpenQuickInputButton
 
 class FolderQuickPickItem
 {
+	/**
+	 * @param {vscode.Uri} uri
+	 * @param {string} name
+	 * @param {string} icon
+	 */
 	constructor(uri, name, icon)
 	{
 		// QuickPickItem
@@ -199,6 +228,11 @@ class FolderQuickPickItem
 
 class WorkspaceFileQuickPickItem
 {
+	/**
+	 * @param {vscode.Uri} uri
+	 * @param {string} name
+	 * @param {string} icon
+	 */
 	constructor(uri, name, icon)
 	{
 		// QuickPickItem
@@ -215,6 +249,9 @@ class WorkspaceFileQuickPickItem
 
 class NewFolderQuickInputButton
 {
+	/**
+	 * @param {vscode.Uri} uri
+	 */
 	constructor(uri)
 	{
 		// QuickInputButton
@@ -230,6 +267,9 @@ class NewFolderQuickInputButton
 
 class NewWorkspaceFileQuickInputButton
 {
+	/**
+	 * @param {vscode.Uri} uri
+	 */
 	constructor(uri)
 	{
 		// QuickInputButton
@@ -248,6 +288,9 @@ class NewWorkspaceFileQuickInputButton
 //
 
 
+/**
+ * @param {vscode.Uri} uri
+ */
 async function readDirectory(uri)
 {
 	const sortOrder = vscode.workspace.getConfiguration().get('workspaceWizard.general.sortOrder');
@@ -287,6 +330,9 @@ async function readDirectory(uri)
 }
 
 
+/**
+ * @param {any} possiblePath
+ */
 function toRealPath(possiblePath)
 {
 	if (typeof possiblePath !== 'string')
@@ -295,6 +341,9 @@ function toRealPath(possiblePath)
 }
 
 
+/**
+ * @param {string} string
+ */
 function iconIdToIconInLabel(string)
 {
 	return string ? `$(${string}) ` : string;
@@ -325,14 +374,20 @@ function createSidebarConfigurableIcons()
 }
 
 
-function configChanged(e) {
-	if (e.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
+/**
+ * @param {vscode.ConfigurationChangeEvent} event
+ */
+function configChanged(event) {
+	if (event.affectsConfiguration('workspaceWizard.sidebar.watchForChanges'))
 		startOrStopFileSystemWatcher();
-	else if (e.affectsConfiguration('workspaceWizard.general.sortOrder'))
+	else if (event.affectsConfiguration('workspaceWizard.general.sortOrder'))
 		refreshWorkspacesSidebar();
 }
 
 
+/**
+ * @param {vscode.Uri} uri
+ */
 function popupErrorUnableToOpen(uri)
 {
 	const buttonText = 'Configure';
@@ -353,6 +408,9 @@ function popupInfoSelectWorkspacesFolder()
 }
 
 
+/**
+ * @param {string} name
+ */
 function simplifyWorkspace(name)
 {
 	return name.slice(0, -15);
@@ -403,12 +461,14 @@ function startOrStopFileSystemWatcher()
 //
 
 
+/** @param {WorkspaceFileQuickPickItem} item */
 function openWorkspaceInCurrentWindow(item)
 {
 	vscode.commands.executeCommand('vscode.openFolder', item.uri, {forceNewWindow: false});
 }
 
 
+/** @param {WorkspaceFileQuickPickItem} item */
 function openWorkspaceInNewWindow(item)
 {
 	vscode.commands.executeCommand('vscode.openFolder', item.uri, {forceNewWindow: true});
@@ -437,6 +497,7 @@ function selectWorkspacesFolder()
 }
 
 
+/** @param {WorkspaceFileQuickPickItem} item */
 function openWorkspace(item)
 {
 	// Decide between new window and current window
@@ -454,6 +515,9 @@ function openWorkspace(item)
 }
 
 
+/**
+ * @param {vscode.Uri} uri
+ */
 async function newFolder(uri)
 {
 	// Make example URI
@@ -472,6 +536,8 @@ async function newFolder(uri)
 		value: uri.fsPath,
 		valueSelection: [selectStart, selectEnd],
 	});
+	if (path === undefined)
+		return;
 	uri = vscode.Uri.file(path);
 
 	// Create the folder
@@ -479,6 +545,9 @@ async function newFolder(uri)
 }
 
 
+/**
+ * @param {vscode.Uri} uri
+ */
 async function newWorkspace(uri)
 {
 	// Make sure workspaceFolders isn't undefined
@@ -501,6 +570,8 @@ async function newWorkspace(uri)
 		value: uri.fsPath,
 		valueSelection: [selectStart, selectEnd],
 	});
+	if (path === undefined)
+		return;
 	uri = vscode.Uri.file(path);
 
 	// Create the content of the workspace file
@@ -520,6 +591,10 @@ async function newWorkspace(uri)
 }
 
 
+/**
+ * @param {vscode.Uri | null} uri
+ * @param {boolean} startup
+ */
 async function quickPickWorkspace(uri, startup)
 {
 	// Stop if already searching filesystem to avoid duplication
@@ -560,6 +635,8 @@ async function quickPickWorkspace(uri, startup)
 			}
 		});
 		quickPick.onDidHide(function() {
+			if (quickPick === undefined)
+				return;
 			quickPick.dispose();
 			quickPick = undefined;
 		});
@@ -574,13 +651,15 @@ async function quickPickWorkspace(uri, startup)
 				case QUICK_SELECT_BUTTON_ACTION_NEW_FOLDER:
 					await newFolder(button.uri);
 					quickPickWorkspace(button.uri, false);
-					break;
+					return;
 				case QUICK_SELECT_BUTTON_ACTION_NEW_WORKSPACE:
 					newWorkspace(button.uri);
-					break;
+					return;
 				case undefined: // Back
+					if (quickPick === undefined)
+						return;
 					quickPickWorkspace(quickPick.items[0].uri, false);
-					break;
+					return;
 			}
 		});
 	}
@@ -632,7 +711,8 @@ async function quickPickWorkspace(uri, startup)
 
 function refreshWorkspacesSidebar()
 {
-	treeDataProvider.refresh();
+	if (treeDataProvider !== undefined)
+		treeDataProvider.refresh();
 }
 
 
@@ -641,10 +721,12 @@ function refreshWorkspacesSidebar()
 //
 
 
-function activate(_context)
+/**
+ * @param {vscode.ExtensionContext} context
+ */
+function activate(context)
 {
-	// Temporary data
-	context = _context;
+	// Global variables
 	treeDataProvider = new WorkspaceTreeDataProvider();
 
 	// Register
@@ -654,7 +736,6 @@ function activate(_context)
 
 		// Commands
 		vscode.commands.registerCommand('workspaceWizard.editWorkspacesFolder', editWorkspacesFolder),
-		vscode.commands.registerCommand('workspaceWizard.openWorkspace', openWorkspace),
 		vscode.commands.registerCommand('workspaceWizard.openWorkspaceInCurrentWindow', openWorkspaceInCurrentWindow),
 		vscode.commands.registerCommand('workspaceWizard.openWorkspaceInNewWindow', openWorkspaceInNewWindow),
 		vscode.commands.registerCommand('workspaceWizard.quickPickWorkspace', quickPickWorkspace),
