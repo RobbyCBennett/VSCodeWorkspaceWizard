@@ -4,7 +4,7 @@ $(OUTPUT): .vscodeignore CHANGELOG.md LICENSE.md README.md extension.js icon.png
 	node node_modules/@vscode/vsce/vsce package -o $(OUTPUT)
 
 node_modules: package.json
-	npm install
+	npm install --ignore-scripts
 
 install: $(OUTPUT)
 	code --install-extension $(OUTPUT)
